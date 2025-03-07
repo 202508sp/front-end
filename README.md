@@ -1,38 +1,45 @@
-# sv
+# Front End
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+## Start
 
-## Creating a project
+### dependencies
 
-If you're seeing this, you've probably already done this step. Congrats!
+- git
 
-```bash
-# create a new project in the current directory
-npx sv create
+1. https://gitforwindows.org/ からダウンロードしてインストールする。
+2. Git-<vertion>-64-bit.exe をダブルクリックしてインストールする。
+3. Choosing the default editor used by Git で Use 
 
-# create a new project in my-app
-npx sv create my-app
+- node.js / npm
+
+```shell
+# nvmをダウンロードしてインストールする：
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
+
+# Node.jsをダウンロードしてインストールする：
+nvm install 20
+
+# Node.jsのバージョンを確認する：
+node -v # "v20.18.3"が表示される。
+nvm current # "v20.18.3"が表示される。
+
+# npmのバージョンを確認する：
+npm -v # "10.8.2"が表示される。
 ```
 
-## Developing
+- bun
+```shell
+# PowerShell なら
+powershell -c "irm bun.sh/install.ps1 | iex"
 
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
-
-```bash
-npm run dev
-
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
+# npm を使うなら
+npm install -g bun
 ```
 
-## Building
+### install
 
-To create a production version of your app:
+1. リポジトリのクローン
 
-```bash
-npm run build
+```shell
+git clone https://github.com/202508sp/front-end.git
 ```
-
-You can preview the production build with `npm run preview`.
-
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
