@@ -1,4 +1,2 @@
-@import 'tailwindcss';
-@plugin '@tailwindcss/forms';
-@plugin '@tailwindcss/typography';
-@plugin '@digital-go-jp/tailwind-theme-plugin';
+@import '@master/normal.css';
+@import url("node_modules/@digital-go-jp/design-tokens/dist/tokens.css");
