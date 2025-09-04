@@ -2,6 +2,7 @@
 	import '../app.css';
 	import '@fontsource-variable/noto-sans-jp';
 	import Icon from '@iconify/svelte';
+	import LayoutShell from '$lib/layout/LayoutShell.svelte';
 	import { defaultColor } from '$lib/utils/color';
 	import { fly } from 'svelte/transition';
 
@@ -44,7 +45,8 @@
 	});
 </script>
 
-<main
+<LayoutShell>
+	<main
 	class="w:100dvw h:100dvh bg:var(--color-background) text:var(--color-text) font:normal flex"
 	style="
 	--color-primary: {defaultColor.primary};
@@ -130,6 +132,7 @@
 		</div>
 	</div>
 </main>
+</LayoutShell>
 
 <style>
 	:global(body) {
