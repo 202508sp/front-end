@@ -12,7 +12,11 @@
         resizable = false,
         gridSize = 20,
         onPositionChange,
-        onSizeChange
+        onSizeChange,
+        checkCollision,
+        isValidPosition,
+        getValidPosition,
+        getSmartPosition
     } = $props<{
         icon: string;
         id: string;
@@ -25,6 +29,10 @@
         gridSize?: number;
         onPositionChange?: (x: number, y: number) => void;
         onSizeChange?: (width: number, height: number) => void;
+        checkCollision?: (x: number, y: number, width: number, height: number) => boolean;
+        isValidPosition?: (x: number, y: number, width: number, height: number) => boolean;
+        getValidPosition?: (targetX: number, targetY: number, width: number, height: number, currentX: number, currentY: number) => { x: number; y: number; canMoveX: boolean; canMoveY: boolean };
+        getSmartPosition?: (targetX: number, targetY: number, width: number, height: number, currentX: number, currentY: number) => { x: number; y: number };
     }>();
 
     let posX: number = $state(position.x);
@@ -33,6 +41,17 @@
     let cardHeight: number = $state(size.height);
     let isDragging: boolean = $state(false);
     let isResizing: boolean = $state(false);
+    let isBlocked: boolean = $state(false); // 移動/リサイズがブロックされている状態
+    let blockedX: boolean = $state(false); // X軸の移動がブロックされている状態
+    let blockedY: boolean = $state(false); // Y軸の移動がブロックされている状態
+    
+    // ドラッグ中の一時的な位置（衝突時は元の位置を保持）
+    let tempPosX: number = $state(position.x);
+    let tempPosY: number = $state(position.y);
+    
+    // スマート移動のためのタイマー
+    let moveTimer: ReturnType<typeof setTimeout> | null = null;
+    const SMART_MOVE_DELAY = 500; // 500ms後にスマート移動を試行
 
     // グリッドにスナップする関数
     function snapToGrid(value: number): number {
@@ -66,13 +85,69 @@
             if (nextX > maxX) nextX = maxX;
             if (nextY > maxY) nextY = maxY;
 
-            // リアルタイムでグリッドにスナップ（カクカク動作）
-            posX = snapToGrid(nextX);
-            posY = snapToGrid(nextY);
+            // グリッドにスナップ
+            const snappedX = snapToGrid(nextX);
+            const snappedY = snapToGrid(nextY);
+            
+            // 軸ごとの移動可能性をチェック
+            if (getValidPosition) {
+                const result = getValidPosition(snappedX, snappedY, cardWidth, cardHeight, posX, posY);
+                
+                // 位置を更新
+                posX = result.x;
+                posY = result.y;
+                tempPosX = result.x;
+                tempPosY = result.y;
+                
+                // ブロック状態を更新
+                blockedX = !result.canMoveX && snappedX !== posX;
+                blockedY = !result.canMoveY && snappedY !== posY;
+                isBlocked = blockedX || blockedY;
+                
+                // スマート移動のタイマーを設定
+                if (isBlocked && getSmartPosition) {
+                    if (moveTimer) clearTimeout(moveTimer);
+                    moveTimer = setTimeout(() => {
+                        const smartPos = getSmartPosition!(snappedX, snappedY, cardWidth, cardHeight, posX, posY);
+                        if (smartPos.x !== posX || smartPos.y !== posY) {
+                            posX = smartPos.x;
+                            posY = smartPos.y;
+                            tempPosX = smartPos.x;
+                            tempPosY = smartPos.y;
+                            isBlocked = false;
+                            blockedX = false;
+                            blockedY = false;
+                        }
+                    }, SMART_MOVE_DELAY);
+                }
+            } else {
+                // フォールバック: 従来のロジック
+                if (isValidPosition && isValidPosition(snappedX, snappedY, cardWidth, cardHeight)) {
+                    posX = snappedX;
+                    posY = snappedY;
+                    tempPosX = snappedX;
+                    tempPosY = snappedY;
+                    isBlocked = false;
+                    blockedX = false;
+                    blockedY = false;
+                } else {
+                    isBlocked = true;
+                }
+            }
         };
 
         const stop = () => {
             isDragging = false;
+            isBlocked = false;
+            blockedX = false;
+            blockedY = false;
+            
+            // タイマーをクリア
+            if (moveTimer) {
+                clearTimeout(moveTimer);
+                moveTimer = null;
+            }
+            
             window.removeEventListener('pointermove', onPointerMove);
             window.removeEventListener('pointerup', stop, true);
             headerEl?.releasePointerCapture(lastPointerId);
@@ -94,6 +169,8 @@
             startY = e.clientY;
             originX = posX;
             originY = posY;
+            tempPosX = posX;
+            tempPosY = posY;
             parentRect = rootEl!.parentElement!.getBoundingClientRect();
             cardRect = rootEl!.getBoundingClientRect();
             document.body.style.userSelect = 'none';
@@ -141,13 +218,30 @@
             if (nextW > maxW) nextW = maxW;
             if (nextH > maxH) nextH = maxH;
 
-            // リアルタイムでグリッドにスナップ（カクカク動作）
-            cardWidth = snapToGrid(nextW);
-            cardHeight = snapToGrid(nextH);
+            // グリッドにスナップ
+            const snappedW = snapToGrid(nextW);
+            const snappedH = snapToGrid(nextH);
+            
+            // 軸ごとのリサイズ可能性をチェック
+            const canResizeW = !isValidPosition || isValidPosition(posX, posY, snappedW, cardHeight);
+            const canResizeH = !isValidPosition || isValidPosition(posX, posY, cardWidth, snappedH);
+            const canResizeBoth = !isValidPosition || isValidPosition(posX, posY, snappedW, snappedH);
+            
+            // サイズを更新
+            if (canResizeBoth) {
+                cardWidth = snappedW;
+                cardHeight = snappedH;
+                isBlocked = false;
+            } else {
+                if (canResizeW) cardWidth = snappedW;
+                if (canResizeH) cardHeight = snappedH;
+                isBlocked = !canResizeW || !canResizeH;
+            }
         };
 
         const stop = () => {
             isResizing = false;
+            isBlocked = false;
             window.removeEventListener('pointermove', onMove);
             window.removeEventListener('pointerup', stop, true);
             resizeHandleEl?.releasePointerCapture(lastPointerId);
@@ -190,8 +284,20 @@
     $effect(() => {
         posX = position.x;
         posY = position.y;
+        tempPosX = position.x;
+        tempPosY = position.y;
         cardWidth = size.width;
         cardHeight = size.height;
+    });
+
+    // クリーンアップ
+    $effect(() => {
+        return () => {
+            if (moveTimer) {
+                clearTimeout(moveTimer);
+                moveTimer = null;
+            }
+        };
     });
 </script>
 
@@ -201,6 +307,9 @@
     style="width: {cardWidth}px; height: {cardHeight}px; position: absolute; transform: translate({posX}px, {posY}px); touch-action: none; z-index: {isDragging || isResizing ? 10 : 1}; transition: {isDragging || isResizing ? 'none' : 'box-shadow 0.2s ease'};"
     class:dragging={isDragging}
     class:resizing={isResizing}
+    class:blocked={isBlocked}
+    class:blocked-x={blockedX}
+    class:blocked-y={blockedY}
 >
     <div
         bind:this={headerEl}
@@ -249,5 +358,20 @@
     
     .resizing {
         box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2) !important;
+    }
+    
+    .blocked {
+        box-shadow: 0 4px 15px rgba(255, 0, 0, 0.3) !important;
+        border-color: rgba(255, 0, 0, 0.5) !important;
+    }
+    
+    .blocked-x {
+        border-left-color: rgba(255, 0, 0, 0.7) !important;
+        border-right-color: rgba(255, 0, 0, 0.7) !important;
+    }
+    
+    .blocked-y {
+        border-top-color: rgba(255, 0, 0, 0.7) !important;
+        border-bottom-color: rgba(255, 0, 0, 0.7) !important;
     }
 </style>
