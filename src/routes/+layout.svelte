@@ -2,7 +2,7 @@
 	import '../app.css';
 	import '@fontsource-variable/noto-sans-jp';
 	import Icon from '@iconify/svelte';
-	import LayoutShell from '$lib/layout/LayoutShell.svelte';
+	import { depth } from '$lib/layout/modalStack';
 	import { defaultColor } from '$lib/utils/color';
 	import { fly } from 'svelte/transition';
 
@@ -45,8 +45,7 @@
 	});
 </script>
 
-<LayoutShell>
-	<main
+<main
 	class="w:100dvw h:100dvh bg:var(--color-background) text:var(--color-text) font:normal flex"
 	style="
 	--color-primary: {defaultColor.primary};
@@ -80,7 +79,9 @@
 			</div>
 		</div>
 		<div class="w:100% h:100% grid-template-cols:90px|1fr grid">
-			<div class="w:100% h:100% justify-content:center align-items:center pl:15px pt:36px flex z:9999">
+			<div
+				class="w:100% h:100% justify-content:center align-items:center pl:15px pt:36px z:9999 flex"
+			>
 				<div class="w:100% h:100% flex:col justify-content:start align-items:start gap:10px flex">
 					<div
 						class="w:100% display:flex flex:row justify-content:space-between align-items:center"
@@ -107,7 +108,7 @@
 						{#each menus as menu}
 							<button
 								class="w:100% h:60px rel grid-template-cols:60px|1fr justify-content:start align-items:center bg:var(--color-secondary) fg:var(--color-text) r:60px cursor:pointer grid"
-								onclick={() => window.location.href = menu.href}
+								onclick={() => (window.location.href = menu.href)}
 							>
 								<div class="w:60px h:60px justify-content:center align-items:center flex">
 									<Icon icon={menu.icon} class="w:30px h:30px" />
@@ -132,7 +133,6 @@
 		</div>
 	</div>
 </main>
-</LayoutShell>
 
 <style>
 	:global(body) {
