@@ -4,8 +4,8 @@
   import Input from '$lib/components/ui/Input.svelte';
   import Button from '$lib/components/ui/Button.svelte';
   import FormField from '$lib/components/ui/FormField.svelte';
-  import { formatters } from '$lib/utils/formatters';
   import { onMount } from 'svelte';
+	import { formatDate } from '$lib/utils';
 
   interface Props {
     onUserSelect?: (user: User) => void;
@@ -461,11 +461,11 @@
                   </div>
                   <div>
                     <span class="font:medium">入所日:</span>
-                    {formatters.formatDate(user.admissionDate)}
+                    {formatDate(user.admissionDate)}
                   </div>
                   <div>
                     <span class="font:medium">更新日:</span>
-                    {formatters.formatDate(user.updatedAt)}
+                    {formatDate(user.updatedAt)}
                   </div>
                 </div>
                 
