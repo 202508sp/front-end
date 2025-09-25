@@ -2,7 +2,7 @@
 	import { type FullAutoFill } from "svelte/elements";
 
   interface Props {
-    type?: 'text' | 'email' | 'password' | 'number' | 'tel' | 'url' | 'search';
+    type?: 'text' | 'email' | 'password' | 'number' | 'tel' | 'url' | 'search' | 'date';
     value?: string | number;
     placeholder?: string;
     disabled?: boolean;
