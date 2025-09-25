@@ -78,7 +78,7 @@
 				<div class="w:160px h:100% b:2px|solid|var(--color-accent-pink) flex"></div>
 			</div>
 		</div>
-		<div class="w:100% h:100% grid-template-cols:90px|1fr grid">
+		<div class="w:100% h:100% grid-template-cols:90px|1fr overflow:hidden grid">
 			<div
 				class="w:100% h:100% justify-content:center align-items:center pl:15px pt:36px z:9999 flex"
 			>
@@ -127,7 +127,7 @@
 					</div>
 				</div>
 			</div>
-			<div class="w:100% h:100% p:40px overflow:auto">
+			<div class="w:100% h:100% p:40px overflow:auto flex">
 				{@render children()}
 			</div>
 		</div>

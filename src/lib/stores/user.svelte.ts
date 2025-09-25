@@ -174,6 +174,163 @@ export class UserStore {
           isActive: true,
           createdAt: new Date('2023-01-15'),
           updatedAt: new Date('2023-01-15')
+        },
+        {
+          id: '2',
+          name: '佐藤花子',
+          nameKana: 'サトウハナコ',
+          birthDate: new Date('1935-08-20'),
+          gender: 'female',
+          address: {
+            postalCode: '456-7890',
+            prefecture: '大阪府',
+            city: '大阪市',
+            street: '梅田1-1-1'
+          },
+          emergencyContact: {
+            name: '佐藤次郎',
+            relationship: '息子',
+            phone: '090-9876-5432'
+          },
+          medicalInfo: {
+            allergies: [],
+            medications: [],
+            conditions: ['認知症'],
+            restrictions: []
+          },
+          careLevel: 4,
+          familyMembers: [],
+          notes: [],
+          admissionDate: new Date('2022-06-10'),
+          isActive: true,
+          createdAt: new Date('2022-06-10'),
+          updatedAt: new Date('2022-06-10')
+        },
+        {
+          id: '3',
+          name: '鈴木一郎',
+          nameKana: 'スズキイチロウ',
+          birthDate: new Date('1945-12-03'),
+          gender: 'male',
+          address: {
+            postalCode: '789-0123',
+            prefecture: '愛知県',
+            city: '名古屋市',
+            street: '栄3-4-5'
+          },
+          emergencyContact: {
+            name: '鈴木美子',
+            relationship: '妻',
+            phone: '080-1111-2222',
+            email: 'yoshiko@example.com'
+          },
+          medicalInfo: {
+            allergies: ['そば', '卵'],
+            medications: [],
+            conditions: ['心疾患', '高血圧', '関節炎'],
+            restrictions: ['運動制限']
+          },
+          careLevel: 2,
+          familyMembers: [],
+          notes: [],
+          admissionDate: new Date('2023-09-01'),
+          isActive: true,
+          createdAt: new Date('2023-09-01'),
+          updatedAt: new Date('2023-09-01')
+        },
+        {
+          id: '4',
+          name: '山田美子',
+          nameKana: 'ヤマダヨシコ',
+          birthDate: new Date('1938-03-18'),
+          gender: 'female',
+          address: {
+            postalCode: '321-6540',
+            prefecture: '福岡県',
+            city: '福岡市',
+            street: '天神2-8-1'
+          },
+          emergencyContact: {
+            name: '山田健太',
+            relationship: '息子',
+            phone: '070-5555-6666'
+          },
+          medicalInfo: {
+            allergies: ['薬物アレルギー'],
+            medications: [],
+            conditions: ['糖尿病', '腎疾患', '視力障害'],
+            restrictions: ['食事制限', '水分制限']
+          },
+          careLevel: 5,
+          familyMembers: [],
+          notes: [],
+          admissionDate: new Date('2021-11-20'),
+          isActive: true,
+          createdAt: new Date('2021-11-20'),
+          updatedAt: new Date('2021-11-20')
+        },
+        {
+          id: '5',
+          name: '高橋正男',
+          nameKana: 'タカハシマサオ',
+          birthDate: new Date('1950-07-25'),
+          gender: 'male',
+          address: {
+            postalCode: '654-3210',
+            prefecture: '北海道',
+            city: '札幌市',
+            street: '中央区大通1-1-1'
+          },
+          emergencyContact: {
+            name: '高橋恵子',
+            relationship: '娘',
+            phone: '090-7777-8888',
+            email: 'keiko@example.com'
+          },
+          medicalInfo: {
+            allergies: [],
+            medications: [],
+            conditions: ['軽度認知症'],
+            restrictions: []
+          },
+          careLevel: 1,
+          familyMembers: [],
+          notes: [],
+          admissionDate: new Date('2024-01-10'),
+          isActive: true,
+          createdAt: new Date('2024-01-10'),
+          updatedAt: new Date('2024-01-10')
+        },
+        {
+          id: '6',
+          name: '伊藤静子',
+          nameKana: 'イトウシズコ',
+          birthDate: new Date('1942-11-12'),
+          gender: 'female',
+          address: {
+            postalCode: '987-6543',
+            prefecture: '宮城県',
+            city: '仙台市',
+            street: '青葉区一番町1-1-1'
+          },
+          emergencyContact: {
+            name: '伊藤大輔',
+            relationship: '息子',
+            phone: '080-9999-0000'
+          },
+          medicalInfo: {
+            allergies: ['花粉'],
+            medications: [],
+            conditions: ['骨粗鬆症', '高血圧'],
+            restrictions: []
+          },
+          careLevel: 2,
+          familyMembers: [],
+          notes: [],
+          admissionDate: new Date('2023-04-15'),
+          isActive: false, // 非アクティブユーザーの例
+          createdAt: new Date('2023-04-15'),
+          updatedAt: new Date('2023-04-15')
         }
       ];
       
