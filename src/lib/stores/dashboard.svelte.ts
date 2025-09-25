@@ -279,9 +279,53 @@ export class DashboardStore {
     const cardIndex = this.cards.findIndex(c => c.id === cardId);
     if (cardIndex === -1) return false;
     
-    Object.assign(this.cards[cardIndex], updates, { updatedAt: new Date() });
-    this.saveToStorage();
+    // 更新前の状態を保存（undo機能用）
+    const previousState = { ...this.cards[cardIndex] };
     
+    // 設定を更新
+    Object.assign(this.cards[cardIndex], updates, { updatedAt: new Date() });
+    
+    // 設定の検証
+    if (!this.validateCardConfig(this.cards[cardIndex])) {
+      // 検証失敗時は元に戻す
+      this.cards[cardIndex] = previousState;
+      this.setError('カード設定が無効です');
+      return false;
+    }
+    
+    this.saveToStorage();
+    this.setError(null);
+    
+    return true;
+  }
+
+  /**
+   * カード設定の検証
+   */
+  private validateCardConfig(card: DashboardCard): boolean {
+    // 基本検証
+    if (!card.title || card.title.trim().length === 0) return false;
+    if (!['small', 'medium', 'large'].includes(card.size)) return false;
+    if (card.position.x < 0 || card.position.y < 0) return false;
+    if (card.position.x >= this.gridSettings.columns || card.position.y >= this.gridSettings.rows) return false;
+
+    // カードタイプ別の設定検証
+    switch (card.type) {
+      case 'user-list':
+        if (card.config.maxItems && (card.config.maxItems < 1 || card.config.maxItems > 50)) return false;
+        break;
+      case 'statistics':
+        if (card.config.statType && !['user-count', 'staff-count', 'daily-reports', 'monthly-summary'].includes(card.config.statType)) return false;
+        if (card.config.dateRange && !['today', 'week', 'month', 'custom'].includes(card.config.dateRange)) return false;
+        break;
+      case 'notifications':
+        if (card.config.maxItems && (card.config.maxItems < 1 || card.config.maxItems > 20)) return false;
+        break;
+      case 'schedule':
+        if (card.config.maxItems && (card.config.maxItems < 1 || card.config.maxItems > 10)) return false;
+        break;
+    }
+
     return true;
   }
   
@@ -425,6 +469,104 @@ export class DashboardStore {
     this.isEditMode = false;
     this.resetDragState();
     this.saveToStorage();
+  }
+
+  /**
+   * カードを複製する
+   */
+  duplicateCard(cardId: string): DashboardCard | null {
+    const originalCard = this.cards.find(c => c.id === cardId);
+    if (!originalCard) return null;
+
+    const nextPosition = this.getNextAvailablePosition();
+    const duplicatedCard: DashboardCard = {
+      ...originalCard,
+      id: this.generateCardId(),
+      title: `${originalCard.title} (コピー)`,
+      position: nextPosition,
+      order: this.getNextOrder(),
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+
+    this.cards.push(duplicatedCard);
+    this.saveToStorage();
+
+    return duplicatedCard;
+  }
+
+  /**
+   * カードの設定をエクスポート
+   */
+  exportCardSettings(): string {
+    const exportData = {
+      cards: this.cards,
+      gridSettings: this.gridSettings,
+      exportedAt: new Date().toISOString(),
+      version: '1.0'
+    };
+
+    return JSON.stringify(exportData, null, 2);
+  }
+
+  /**
+   * カードの設定をインポート
+   */
+  importCardSettings(jsonData: string): boolean {
+    try {
+      const importData = JSON.parse(jsonData);
+      
+      if (!importData.cards || !Array.isArray(importData.cards)) {
+        this.setError('無効なデータ形式です');
+        return false;
+      }
+
+      // データの検証
+      const validCards = importData.cards.filter((card: any) => {
+        return card.id && card.type && card.title && card.position;
+      });
+
+      if (validCards.length === 0) {
+        this.setError('有効なカードデータが見つかりません');
+        return false;
+      }
+
+      // 既存のカードをクリアして新しいデータを設定
+      this.cards = validCards.map((card: any) => ({
+        ...card,
+        createdAt: new Date(card.createdAt),
+        updatedAt: new Date(card.updatedAt)
+      }));
+
+      if (importData.gridSettings) {
+        this.gridSettings = { ...this.gridSettings, ...importData.gridSettings };
+      }
+
+      this.saveToStorage();
+      this.setError(null);
+
+      return true;
+    } catch (error) {
+      this.setError('データの読み込みに失敗しました');
+      return false;
+    }
+  }
+
+  /**
+   * カードの統計情報を取得
+   */
+  getCardStatistics() {
+    return {
+      totalCards: this.cards.length,
+      visibleCards: this.visibleCards.length,
+      hiddenCards: this.cards.length - this.visibleCards.length,
+      cardsByType: this.cardStats,
+      cardsBySizeSmall: this.cards.filter(c => c.size === 'small').length,
+      cardsBySizeMedium: this.cards.filter(c => c.size === 'medium').length,
+      cardsBySizeLarge: this.cards.filter(c => c.size === 'large').length,
+      lastUpdated: this.cards.length > 0 ? 
+        Math.max(...this.cards.map(c => c.updatedAt.getTime())) : null
+    };
   }
   
   /**

@@ -100,9 +100,44 @@
   // カードクリックハンドラー
   function handleCardClick() {
     if (!isEditMode && !isDraggable) {
-      // 通常モードでのカードクリック処理
-      // TODO: カードタイプに応じた処理を実装
-      console.log('Card clicked:', card.type);
+      // カードタイプに応じた処理を実装
+      handleCardTypeClick(card.type);
+    }
+  }
+
+  // カードタイプ別のクリック処理
+  function handleCardTypeClick(cardType: string) {
+    switch (cardType) {
+      case 'user-list':
+        // 利用者一覧ページに遷移
+        window.location.href = '/user';
+        break;
+      case 'statistics':
+        // 統計ページに遷移
+        window.location.href = '/statistics';
+        break;
+      case 'schedule':
+        // スケジュール詳細を表示（モーダルまたは別ページ）
+        console.log('Opening schedule details');
+        break;
+      case 'notifications':
+        // 通知一覧を表示
+        console.log('Opening notifications');
+        break;
+      case 'quick-actions':
+        // クイックアクション実行（カード内で処理）
+        console.log('Quick actions clicked');
+        break;
+      case 'recent-reports':
+        // レポート一覧ページに遷移
+        window.location.href = '/management';
+        break;
+      case 'chat-summary':
+        // チャット画面に遷移
+        window.location.href = '/management';
+        break;
+      default:
+        console.log('Card clicked:', cardType);
     }
   }
 

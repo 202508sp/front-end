@@ -7,13 +7,16 @@
   import Button from '$lib/components/ui/Button.svelte';
   import CardGrid from '$lib/components/dashboard/CardGrid.svelte';
   import CardSelector from '$lib/components/dashboard/CardSelector.svelte';
-  import type { CardTemplate, Position } from '$lib/types/dashboard.js';
+  import CardEditModal from '$lib/components/dashboard/CardEditModal.svelte';
+  import type { CardTemplate, Position, DashboardCard } from '$lib/types/dashboard.js';
   import Icon from '@iconify/svelte';
 
   // ストアから状態を取得
   const { visibleCards, isEditMode, canEdit, cardTemplates, gridSettings } = dashboardStore;
 
   let showCardSelector = $state(false);
+  let showCardEditModal = $state(false);
+  let editingCard = $state<DashboardCard | null>(null);
 
   function toggleEditMode() {
     dashboardStore.toggleEditMode();
@@ -42,8 +45,20 @@
   }
 
   function handleCardEdit(cardId: string) {
-    // TODO: カード編集モーダルを実装
-    console.log('Edit card:', cardId);
+    const card = visibleCards.find(c => c.id === cardId);
+    if (card) {
+      editingCard = card;
+      showCardEditModal = true;
+    }
+  }
+
+  function closeCardEditModal() {
+    showCardEditModal = false;
+    editingCard = null;
+  }
+
+  function handleCardSave(cardId: string, updates: Partial<DashboardCard>) {
+    dashboardStore.updateCard(cardId, updates);
   }
 
   function handleCardAdd(position: Position) {
@@ -162,6 +177,14 @@
   templates={cardTemplates}
   onClose={closeCardSelector}
   onSelect={handleCardSelect}
+/>
+
+<!-- カード編集モーダル -->
+<CardEditModal
+  isOpen={showCardEditModal}
+  card={editingCard}
+  onClose={closeCardEditModal}
+  onSave={handleCardSave}
 />
 
 <style>

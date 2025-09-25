@@ -3,7 +3,6 @@
   新しいカードを追加するためのモーダル
 -->
 <script lang="ts">
-	import { createEventDispatcher } from 'svelte';
 	import Modal from '$lib/components/ui/Modal.svelte';
 	import Button from '$lib/components/ui/Button.svelte';
 	import type { CardTemplate } from '$lib/types/dashboard.js';
