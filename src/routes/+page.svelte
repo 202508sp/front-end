@@ -16,7 +16,7 @@
 				{ name: '鈴木 一郎', detail: '' }
 			],
 			position: { x: 0, y: 0 },
-			size: { width: 400, height: 300 }
+			size: { width: '400px', height: '300px' }
 		},
 		{
 			id: 'task-list',
@@ -28,7 +28,7 @@
 				{ name: 'コーディング', detail: '進行中' }
 			],
 			position: { x: 440, y: 0 },
-			size: { width: 360, height: 240 }
+			size: { width: '360px', height: '240px' }
 		},
 		{
 			id: 'note-list',
@@ -39,13 +39,18 @@
 				{ name: 'アイデア', detail: '新機能' }
 			],
 			position: { x: 0, y: 320 },
-			size: { width: 320, height: 200 }
+			size: { width: '320px', height: '200px' }
 		}
 	]);
 
 	// グリッドにスナップする関数
 	function snapToGrid(value: number): number {
 		return Math.round(value / GRID_SIZE) * GRID_SIZE;
+	}
+
+	// 文字列サイズを数値に変換
+	function parseSize(size: string): number {
+		return parseInt(size.replace('px', ''), 10);
 	}
 
 	// カードの位置を更新
@@ -61,8 +66,8 @@
 	function updateCardSize(cardId: string, width: number, height: number) {
 		const card = cards.find((c) => c.id === cardId);
 		if (card) {
-			card.size.width = snapToGrid(width);
-			card.size.height = snapToGrid(height);
+			card.size.width = `${snapToGrid(width)}px`;
+			card.size.height = `${snapToGrid(height)}px`;
 		}
 	}
 
@@ -94,8 +99,8 @@
 			const cardRect = {
 				x: card.position.x,
 				y: card.position.y,
-				width: card.size.width,
-				height: card.size.height
+				width: parseSize(card.size.width),
+				height: parseSize(card.size.height)
 			};
 			return isColliding(targetRect, cardRect);
 		});
@@ -179,8 +184,8 @@
 			const otherRect = {
 				x: otherCard.position.x,
 				y: otherCard.position.y,
-				width: otherCard.size.width,
-				height: otherCard.size.height
+				width: parseSize(otherCard.size.width),
+				height: parseSize(otherCard.size.height)
 			};
 
 			const targetRect = { x: targetX, y: targetY, width, height };

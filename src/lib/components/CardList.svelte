@@ -7,7 +7,7 @@
         title,
         list,
         position = { x: 0, y: 0 },
-        size = { width: 400, height: 300 },
+        size = $bindable<{ width: string, height: string }>({ width: '400px', height: '400px' }),
         draggable = false,
         resizable = false,
         gridSize = 20,
@@ -21,9 +21,9 @@
         icon: string;
         id: string;
         title: string;
-        list: { name: string; detail: string; icon?: string }[];
+        list: { name: string; detail: string; icon?: string; onClick?: () => void }[];
         position?: { x: number; y: number };
-        size?: { width: number; height: number };
+        size?: { width: string; height: string };
         draggable?: boolean;
         resizable?: boolean;
         gridSize?: number;
@@ -329,6 +329,15 @@
         {#each list as item}
             <div
                 class="w:100% h:45px grid-template-columns:120px|1fr py:8px bb:2px|solid|color-imemo-tertiary cursor:pointer grid hover:bg:rgba(134,106,80,0.1)"
+                onclick={item.onClick}
+                onkeydown={(e) => {
+                    if ((e.key === 'Enter' || e.key === ' ') && item.onClick) {
+                        e.preventDefault();
+                        item.onClick();
+                    }
+                }}
+                role="button"
+                tabindex="0"
             >
                 <div class="w:100% px:16px justify-content:start align-items:center gap:16px flex">
                     {#if item.icon}
