@@ -4,6 +4,7 @@
 
   interface Props {
     isOpen: boolean;
+    onClose: () => void;
     title?: string;
     size?: 'sm' | 'md' | 'lg' | 'xl' | 'full';
     closable?: boolean;
@@ -15,6 +16,7 @@
 
   let {
     isOpen = $bindable(),
+    onClose,
     title,
     size = 'md',
     closable = true,
