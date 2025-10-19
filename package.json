@@ -46,6 +46,9 @@
 		"@fontsource-variable/noto-sans-jp": "^5.2.5",
 		"@iconify/svelte": "^4.2.0",
 		"@master/normal.css": "^3.2.0",
+		"chart.js": "^4.5.1",
+		"chartjs-adapter-date-fns": "^3.0.0",
+		"date-fns": "^4.1.0",
 		"firebase": "^11.6.0"
 	}
 }

@@ -297,3 +297,468 @@ export function validateForm<T extends Record<string, any>>(
   
   return errors;
 }
+
+/**
+ * 利用者データの包括的バリデーション
+ */
+export function validateUserData(user: Partial<import('../types/user.js').User>): ValidationError[] {
+  const errors: ValidationError[] = [];
+
+  // 基本情報のバリデーション
+  if (!user.name?.trim()) {
+    errors.push(validateRequired(user.name, '氏名')!);
+  } else {
+    const lengthError = validateLength(user.name, '氏名', 1, 100);
+    if (lengthError) errors.push(lengthError);
+  }
+
+  if (!user.nameKana?.trim()) {
+    errors.push(validateRequired(user.nameKana, '氏名（カナ）')!);
+  } else {
+    const lengthError = validateLength(user.nameKana, '氏名（カナ）', 1, 100);
+    if (lengthError) errors.push(lengthError);
+    
+    // カタカナチェック
+    if (!/^[ァ-ヶー\s]+$/.test(user.nameKana)) {
+      errors.push({
+        field: '氏名（カナ）',
+        message: '氏名（カナ）はカタカナで入力してください',
+        code: 'invalid_katakana'
+      });
+    }
+  }
+
+  // 生年月日のバリデーション
+  if (!user.birthDate) {
+    errors.push(validateRequired(user.birthDate, '生年月日')!);
+  } else {
+    const birthDateError = validateBirthDate(user.birthDate, '生年月日');
+    if (birthDateError) errors.push(birthDateError);
+  }
+
+  // 性別のバリデーション
+  if (!user.gender) {
+    errors.push(validateRequired(user.gender, '性別')!);
+  } else if (!['male', 'female', 'other'].includes(user.gender)) {
+    errors.push({
+      field: '性別',
+      message: '有効な性別を選択してください',
+      code: 'invalid_gender'
+    });
+  }
+
+  // 要介護度のバリデーション
+  if (user.careLevel === undefined || user.careLevel === null) {
+    errors.push(validateRequired(user.careLevel, '要介護度')!);
+  } else {
+    const careLevelError = validateCareLevel(user.careLevel, '要介護度');
+    if (careLevelError) errors.push(careLevelError);
+  }
+
+  // 入所日のバリデーション
+  if (!user.admissionDate) {
+    errors.push(validateRequired(user.admissionDate, '入所日')!);
+  } else {
+    const admissionDateError = validateDate(user.admissionDate, '入所日');
+    if (admissionDateError) errors.push(admissionDateError);
+    
+    // 入所日が生年月日より後かチェック
+    if (user.birthDate && user.admissionDate <= user.birthDate) {
+      errors.push({
+        field: '入所日',
+        message: '入所日は生年月日より後の日付である必要があります',
+        code: 'invalid_admission_date'
+      });
+    }
+  }
+
+  // 住所のバリデーション
+  if (user.address) {
+    if (user.address.postalCode) {
+      const postalError = validatePostalCode(user.address.postalCode, '郵便番号');
+      if (postalError) errors.push(postalError);
+    }
+
+    if (!user.address.prefecture?.trim()) {
+      errors.push(validateRequired(user.address.prefecture, '都道府県')!);
+    }
+
+    if (!user.address.city?.trim()) {
+      errors.push(validateRequired(user.address.city, '市区町村')!);
+    }
+
+    if (!user.address.street?.trim()) {
+      errors.push(validateRequired(user.address.street, '町名・番地')!);
+    }
+  }
+
+  // 緊急連絡先のバリデーション
+  if (user.emergencyContact) {
+    if (!user.emergencyContact.name?.trim()) {
+      errors.push(validateRequired(user.emergencyContact.name, '緊急連絡先氏名')!);
+    }
+
+    if (!user.emergencyContact.relationship?.trim()) {
+      errors.push(validateRequired(user.emergencyContact.relationship, '続柄')!);
+    }
+
+    if (!user.emergencyContact.phone?.trim()) {
+      errors.push(validateRequired(user.emergencyContact.phone, '緊急連絡先電話番号')!);
+    } else {
+      const phoneError = validatePhoneNumber(user.emergencyContact.phone, '緊急連絡先電話番号');
+      if (phoneError) errors.push(phoneError);
+    }
+
+    if (user.emergencyContact.email?.trim()) {
+      const emailError = validateEmail(user.emergencyContact.email, '緊急連絡先メールアドレス');
+      if (emailError) errors.push(emailError);
+    }
+  }
+
+  // 医療情報のバリデーション
+  if (user.medicalInfo) {
+    // 身長のバリデーション
+    if (user.medicalInfo.height !== undefined && user.medicalInfo.height !== null) {
+      const heightError = validateRange(user.medicalInfo.height, '身長', 50, 250);
+      if (heightError) errors.push(heightError);
+    }
+
+    // 体重のバリデーション
+    if (user.medicalInfo.weight !== undefined && user.medicalInfo.weight !== null) {
+      const weightError = validateRange(user.medicalInfo.weight, '体重', 20, 200);
+      if (weightError) errors.push(weightError);
+    }
+
+    // 血液型のバリデーション
+    if (user.medicalInfo.bloodType && !['A', 'B', 'AB', 'O'].includes(user.medicalInfo.bloodType)) {
+      errors.push({
+        field: '血液型',
+        message: '有効な血液型を選択してください',
+        code: 'invalid_blood_type'
+      });
+    }
+
+    // 服薬情報のバリデーション
+    if (user.medicalInfo.medications) {
+      user.medicalInfo.medications.forEach((medication, index) => {
+        if (!medication.name?.trim()) {
+          errors.push({
+            field: `服薬情報[${index + 1}].薬名`,
+            message: '薬名は必須です',
+            code: 'required'
+          });
+        }
+
+        if (!medication.dosage?.trim()) {
+          errors.push({
+            field: `服薬情報[${index + 1}].用量`,
+            message: '用量は必須です',
+            code: 'required'
+          });
+        }
+
+        if (!medication.frequency?.trim()) {
+          errors.push({
+            field: `服薬情報[${index + 1}].服用頻度`,
+            message: '服用頻度は必須です',
+            code: 'required'
+          });
+        }
+
+        if (!medication.startDate) {
+          errors.push({
+            field: `服薬情報[${index + 1}].開始日`,
+            message: '開始日は必須です',
+            code: 'required'
+          });
+        }
+      });
+    }
+  }
+
+  // 家族情報のバリデーション
+  if (user.familyMembers) {
+    user.familyMembers.forEach((member, index) => {
+      if (!member.name?.trim()) {
+        errors.push({
+          field: `家族情報[${index + 1}].氏名`,
+          message: '家族の氏名は必須です',
+          code: 'required'
+        });
+      }
+
+      if (!member.relationship?.trim()) {
+        errors.push({
+          field: `家族情報[${index + 1}].続柄`,
+          message: '続柄は必須です',
+          code: 'required'
+        });
+      }
+
+      if (!member.phone?.trim()) {
+        errors.push({
+          field: `家族情報[${index + 1}].電話番号`,
+          message: '電話番号は必須です',
+          code: 'required'
+        });
+      } else {
+        const phoneError = validatePhoneNumber(member.phone, `家族情報[${index + 1}].電話番号`);
+        if (phoneError) errors.push(phoneError);
+      }
+
+      if (member.email?.trim()) {
+        const emailError = validateEmail(member.email, `家族情報[${index + 1}].メールアドレス`);
+        if (emailError) errors.push(emailError);
+      }
+    });
+  }
+
+  // 記録・メモのバリデーション
+  if (user.notes) {
+    user.notes.forEach((note, index) => {
+      if (!note.content?.trim()) {
+        errors.push({
+          field: `記録[${index + 1}].内容`,
+          message: '記録内容は必須です',
+          code: 'required'
+        });
+      }
+
+      if (!['general', 'medical', 'behavioral', 'family', 'care-plan'].includes(note.category)) {
+        errors.push({
+          field: `記録[${index + 1}].カテゴリ`,
+          message: '有効なカテゴリを選択してください',
+          code: 'invalid_category'
+        });
+      }
+    });
+  }
+
+  return errors;
+}
+/*
+*
+ * 職員データの包括的バリデーション
+ */
+export function validateStaffData(staff: Partial<import('../types/staff.js').Staff>): ValidationError[] {
+  const errors: ValidationError[] = [];
+
+  // 基本情報のバリデーション
+  if (!staff.name?.trim()) {
+    errors.push(validateRequired(staff.name, '氏名')!);
+  } else {
+    const lengthError = validateLength(staff.name, '氏名', 1, 100);
+    if (lengthError) errors.push(lengthError);
+  }
+
+  if (!staff.nameKana?.trim()) {
+    errors.push(validateRequired(staff.nameKana, '氏名（カナ）')!);
+  } else {
+    const lengthError = validateLength(staff.nameKana, '氏名（カナ）', 1, 100);
+    if (lengthError) errors.push(lengthError);
+    
+    // カタカナチェック
+    if (!/^[ァ-ヶー\s]+$/.test(staff.nameKana)) {
+      errors.push({
+        field: '氏名（カナ）',
+        message: '氏名（カナ）はカタカナで入力してください',
+        code: 'invalid_katakana'
+      });
+    }
+  }
+
+  // メールアドレスのバリデーション
+  if (!staff.email?.trim()) {
+    errors.push(validateRequired(staff.email, 'メールアドレス')!);
+  } else {
+    const emailError = validateEmail(staff.email, 'メールアドレス');
+    if (emailError) errors.push(emailError);
+  }
+
+  // 電話番号のバリデーション
+  if (!staff.phone?.trim()) {
+    errors.push(validateRequired(staff.phone, '電話番号')!);
+  } else {
+    const phoneError = validatePhoneNumber(staff.phone, '電話番号');
+    if (phoneError) errors.push(phoneError);
+  }
+
+  // 役職のバリデーション
+  if (!staff.role) {
+    errors.push(validateRequired(staff.role, '役職')!);
+  } else if (!['admin', 'manager', 'caregiver', 'nurse', 'therapist', 'support'].includes(staff.role)) {
+    errors.push({
+      field: '役職',
+      message: '有効な役職を選択してください',
+      code: 'invalid_role'
+    });
+  }
+
+  // 部署のバリデーション
+  if (!staff.department?.trim()) {
+    errors.push(validateRequired(staff.department, '部署')!);
+  } else {
+    const lengthError = validateLength(staff.department, '部署', 1, 100);
+    if (lengthError) errors.push(lengthError);
+  }
+
+  // 入社日のバリデーション
+  if (!staff.hireDate) {
+    errors.push(validateRequired(staff.hireDate, '入社日')!);
+  } else {
+    const hireDateError = validateDate(staff.hireDate, '入社日');
+    if (hireDateError) errors.push(hireDateError);
+    
+    // 入社日が未来でないかチェック
+    const today = new Date();
+    if (staff.hireDate > today) {
+      errors.push({
+        field: '入社日',
+        message: '入社日は今日以前の日付である必要があります',
+        code: 'future_hire_date'
+      });
+    }
+  }
+
+  // 権限のバリデーション
+  if (staff.permissions) {
+    const validPermissions = [
+      'user.read', 'user.write', 'staff.read', 'staff.write', 
+      'statistics.read', 'settings.write', 'reports.write', 'family.communicate'
+    ];
+    
+    staff.permissions.forEach((permission, index) => {
+      if (!validPermissions.includes(permission)) {
+        errors.push({
+          field: `権限[${index + 1}]`,
+          message: '無効な権限が含まれています',
+          code: 'invalid_permission'
+        });
+      }
+    });
+  }
+
+  // 資格情報のバリデーション
+  if (staff.qualifications) {
+    staff.qualifications.forEach((qualification, index) => {
+      if (!qualification.name?.trim()) {
+        errors.push({
+          field: `資格[${index + 1}].名前`,
+          message: '資格名は必須です',
+          code: 'required'
+        });
+      }
+
+      if (!qualification.issuer?.trim()) {
+        errors.push({
+          field: `資格[${index + 1}].発行機関`,
+          message: '発行機関は必須です',
+          code: 'required'
+        });
+      }
+
+      if (!qualification.issueDate) {
+        errors.push({
+          field: `資格[${index + 1}].取得日`,
+          message: '取得日は必須です',
+          code: 'required'
+        });
+      } else {
+        const issueDateError = validateDate(qualification.issueDate, `資格[${index + 1}].取得日`);
+        if (issueDateError) errors.push(issueDateError);
+      }
+
+      // 有効期限のバリデーション（設定されている場合）
+      if (qualification.expiryDate) {
+        const expiryDateError = validateDate(qualification.expiryDate, `資格[${index + 1}].有効期限`);
+        if (expiryDateError) errors.push(expiryDateError);
+        
+        // 有効期限が取得日より後かチェック
+        if (qualification.issueDate && qualification.expiryDate <= qualification.issueDate) {
+          errors.push({
+            field: `資格[${index + 1}].有効期限`,
+            message: '有効期限は取得日より後の日付である必要があります',
+            code: 'invalid_expiry_date'
+          });
+        }
+      }
+    });
+  }
+
+  // スケジュール情報のバリデーション
+  if (staff.schedule) {
+    staff.schedule.forEach((schedule, index) => {
+      if (!schedule.date) {
+        errors.push({
+          field: `スケジュール[${index + 1}].日付`,
+          message: '日付は必須です',
+          code: 'required'
+        });
+      } else {
+        const dateError = validateDate(schedule.date, `スケジュール[${index + 1}].日付`);
+        if (dateError) errors.push(dateError);
+      }
+
+      if (!schedule.startTime?.trim()) {
+        errors.push({
+          field: `スケジュール[${index + 1}].開始時間`,
+          message: '開始時間は必須です',
+          code: 'required'
+        });
+      } else if (!/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/.test(schedule.startTime)) {
+        errors.push({
+          field: `スケジュール[${index + 1}].開始時間`,
+          message: '開始時間は HH:MM 形式で入力してください',
+          code: 'invalid_time_format'
+        });
+      }
+
+      if (!schedule.endTime?.trim()) {
+        errors.push({
+          field: `スケジュール[${index + 1}].終了時間`,
+          message: '終了時間は必須です',
+          code: 'required'
+        });
+      } else if (!/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/.test(schedule.endTime)) {
+        errors.push({
+          field: `スケジュール[${index + 1}].終了時間`,
+          message: '終了時間は HH:MM 形式で入力してください',
+          code: 'invalid_time_format'
+        });
+      }
+
+      // 開始時間と終了時間の整合性チェック
+      if (schedule.startTime && schedule.endTime) {
+        const [startHour, startMin] = schedule.startTime.split(':').map(Number);
+        const [endHour, endMin] = schedule.endTime.split(':').map(Number);
+        const startMinutes = startHour * 60 + startMin;
+        const endMinutes = endHour * 60 + endMin;
+        
+        // 夜勤の場合は翌日にまたがることを考慮
+        if (schedule.shiftType !== 'night' && startMinutes >= endMinutes) {
+          errors.push({
+            field: `スケジュール[${index + 1}].時間`,
+            message: '終了時間は開始時間より後である必要があります',
+            code: 'invalid_time_range'
+          });
+        }
+      }
+
+      if (!schedule.shiftType) {
+        errors.push({
+          field: `スケジュール[${index + 1}].シフトタイプ`,
+          message: 'シフトタイプは必須です',
+          code: 'required'
+        });
+      } else if (!['day', 'evening', 'night', 'on-call'].includes(schedule.shiftType)) {
+        errors.push({
+          field: `スケジュール[${index + 1}].シフトタイプ`,
+          message: '有効なシフトタイプを選択してください',
+          code: 'invalid_shift_type'
+        });
+      }
+    });
+  }
+
+  return errors;
+}

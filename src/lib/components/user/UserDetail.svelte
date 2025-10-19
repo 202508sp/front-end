@@ -1,9 +1,11 @@
 <script lang="ts">
 	import type { User, MedicalInfo, FamilyMember, Note } from '$lib/types/user';
+	import type { ValidationError } from '$lib/types/common';
 	import FormField from '$lib/components/ui/FormField.svelte';
 	import Input from '$lib/components/ui/Input.svelte';
 	import Button from '$lib/components/ui/Button.svelte';
 	import { formatDate, calculateAge } from '$lib/utils/date';
+	import { validateUserData } from '$lib/utils/validation';
 
 	interface Props {
 		user: User;
@@ -18,6 +20,9 @@
 	let editedUser = $state<User>(structuredClone(user));
 	let expandedSections = $state<Set<string>>(new Set());
 	let activeTab = $state<'basic' | 'medical' | 'family' | 'notes'>('basic');
+	let validationErrors = $state<ValidationError[]>([]);
+	let isValidating = $state(false);
+	let isSaving = $state(false);
 
 	// Update edited user when user prop changes
 	$effect(() => {
@@ -35,13 +40,59 @@
 		expandedSections = new Set(expandedSections);
 	}
 
-	function handleSave() {
-		onSave?.(editedUser);
+	async function handleSave() {
+		isValidating = true;
+		validationErrors = [];
+
+		try {
+			// バリデーション実行
+			const errors = validateUserData(editedUser);
+			
+			if (errors.length > 0) {
+				validationErrors = errors;
+				// 最初のエラーがあるタブに切り替え
+				const firstError = errors[0];
+				if (firstError.field.includes('医療') || firstError.field.includes('服薬') || firstError.field.includes('血液型') || firstError.field.includes('身長') || firstError.field.includes('体重')) {
+					activeTab = 'medical';
+				} else if (firstError.field.includes('家族')) {
+					activeTab = 'family';
+				} else if (firstError.field.includes('記録')) {
+					activeTab = 'notes';
+				} else {
+					activeTab = 'basic';
+				}
+				return;
+			}
+
+			isSaving = true;
+			await onSave?.(editedUser);
+		} catch (error) {
+			console.error('保存エラー:', error);
+			validationErrors = [{
+				field: 'general',
+				message: '保存中にエラーが発生しました',
+				code: 'save_error'
+			}];
+		} finally {
+			isValidating = false;
+			isSaving = false;
+		}
 	}
 
 	function handleCancel() {
 		editedUser = structuredClone(user);
+		validationErrors = [];
 		onCancel?.();
+	}
+
+	// フィールド固有のエラーを取得
+	function getFieldError(fieldName: string): ValidationError | undefined {
+		return validationErrors.find(error => error.field === fieldName);
+	}
+
+	// フィールドにエラーがあるかチェック
+	function hasFieldError(fieldName: string): boolean {
+		return validationErrors.some(error => error.field === fieldName);
 	}
 
 	function addMedication() {
@@ -114,11 +165,52 @@
 					<p class="text:sm text:blue-700">利用者情報を編集しています</p>
 				</div>
 				<div class="gap:2 flex">
-					<Button variant="outline" size="sm" onclick={handleCancel}>キャンセル</Button>
-					<Button variant="primary" size="sm" onclick={handleSave}>保存</Button>
+					<Button variant="outline" size="sm" onclick={handleCancel} disabled={isSaving}>
+						キャンセル
+					</Button>
+					<Button 
+						variant="primary" 
+						size="sm" 
+						onclick={handleSave} 
+						disabled={isValidating || isSaving}
+					>
+						{#if isSaving}
+							<svg class="animate:spin w:4 h:4 mr:2" fill="none" viewBox="0 0 24 24">
+								<circle class="opacity:25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+								<path class="opacity:75" fill="currentColor" d="m4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+							</svg>
+							保存中...
+						{:else if isValidating}
+							検証中...
+						{:else}
+							保存
+						{/if}
+					</Button>
 				</div>
 			</div>
 		</div>
+
+		<!-- Validation Errors -->
+		{#if validationErrors.length > 0}
+			<div class="p:4 bg:red-50 border-b:1|solid|red-200">
+				<div class="items:start flex">
+					<svg class="w:5 h:5 text:red-500 mt:0.5 mr:2 flex-shrink:0" fill="currentColor" viewBox="0 0 20 20">
+						<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+					</svg>
+					<div class="flex:1">
+						<h4 class="text:sm font:medium text:red-800 mb:1">入力内容に問題があります</h4>
+						<ul class="text:sm text:red-700 space-y:1">
+							{#each validationErrors.slice(0, 5) as error}
+								<li>• {error.message}</li>
+							{/each}
+							{#if validationErrors.length > 5}
+								<li class="text:red-600">他 {validationErrors.length - 5} 件のエラー</li>
+							{/if}
+						</ul>
+					</div>
+				</div>
+			</div>
+		{/if}
 	{/if}
 
 	<!-- Tab Navigation -->
@@ -186,13 +278,33 @@
 			<div class="space-y:6">
 				{#if isEditMode}
 					<div class="grid-cols:1 @md:grid-cols:2 gap:4 grid">
-						<FormField label="氏名" required>
-							<Input bind:value={editedUser.name} placeholder="山田 太郎" />
+						<FormField 
+							label="氏名" 
+							required 
+							error={getFieldError('氏名')?.message}
+						>
+							<Input 
+								bind:value={editedUser.name} 
+								placeholder="山田 太郎"
+								class={hasFieldError('氏名') ? 'border-red-500 focus:border-red-500' : ''}
+							/>
 						</FormField>
-						<FormField label="氏名（カナ）" required>
-							<Input bind:value={editedUser.nameKana} placeholder="ヤマダ タロウ" />
+						<FormField 
+							label="氏名（カナ）" 
+							required
+							error={getFieldError('氏名（カナ）')?.message}
+						>
+							<Input 
+								bind:value={editedUser.nameKana} 
+								placeholder="ヤマダ タロウ"
+								class={hasFieldError('氏名（カナ）') ? 'border-red-500 focus:border-red-500' : ''}
+							/>
 						</FormField>
-						<FormField label="生年月日" required>
+						<FormField 
+							label="生年月日" 
+							required
+							error={getFieldError('生年月日')?.message}
+						>
 							<Input
 								type="date"
 								value={editedUser.birthDate.toISOString().split('T')[0]}
@@ -200,29 +312,44 @@
 									const target = e.target as HTMLInputElement;
 									editedUser.birthDate = new Date(target.value);
 								}}
+								class={hasFieldError('生年月日') ? 'border-red-500 focus:border-red-500' : ''}
 							/>
 						</FormField>
-						<FormField label="性別" required>
+						<FormField 
+							label="性別" 
+							required
+							error={getFieldError('性別')?.message}
+						>
 							<select
 								bind:value={editedUser.gender}
-								class="w:full px:3 py:2 border:1|solid|gray-300 rounded:md focus:outline:2|solid|blue-500"
+								class="w:full px:3 py:2 border:1|solid|gray-300 rounded:md focus:outline:2|solid|blue-500 {hasFieldError('性別') ? 'border-red-500 focus:border-red-500' : ''}"
 							>
+								<option value="">選択してください</option>
 								<option value="male">男性</option>
 								<option value="female">女性</option>
 								<option value="other">その他</option>
 							</select>
 						</FormField>
-						<FormField label="要介護度" required>
+						<FormField 
+							label="要介護度" 
+							required
+							error={getFieldError('要介護度')?.message}
+						>
 							<select
 								bind:value={editedUser.careLevel}
-								class="w:full px:3 py:2 border:1|solid|gray-300 rounded:md focus:outline:2|solid|blue-500"
+								class="w:full px:3 py:2 border:1|solid|gray-300 rounded:md focus:outline:2|solid|blue-500 {hasFieldError('要介護度') ? 'border-red-500 focus:border-red-500' : ''}"
 							>
+								<option value="">選択してください</option>
 								{#each [1, 2, 3, 4, 5] as level}
 									<option value={level}>要介護{level}</option>
 								{/each}
 							</select>
 						</FormField>
-						<FormField label="入所日" required>
+						<FormField 
+							label="入所日" 
+							required
+							error={getFieldError('入所日')?.message}
+						>
 							<Input
 								type="date"
 								value={editedUser.admissionDate.toISOString().split('T')[0]}
@@ -230,6 +357,7 @@
 									const target = e.target as HTMLInputElement;
 									editedUser.admissionDate = new Date(target.value);
 								}}
+								class={hasFieldError('入所日') ? 'border-red-500 focus:border-red-500' : ''}
 							/>
 						</FormField>
 					</div>

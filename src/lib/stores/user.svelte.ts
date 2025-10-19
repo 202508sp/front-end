@@ -387,6 +387,16 @@ export class UserStore {
         updatedAt: new Date()
       };
       
+      // TODO: 実際のAPI呼び出しに置き換え
+      // await fetch(`/api/users/${id}`, {
+      //   method: 'PUT',
+      //   headers: { 'Content-Type': 'application/json' },
+      //   body: JSON.stringify(updatedUser)
+      // });
+      
+      // 少し遅延を追加してリアルなAPI呼び出しをシミュレート
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
       this.users[userIndex] = updatedUser;
       
       // 選択中の利用者も更新
