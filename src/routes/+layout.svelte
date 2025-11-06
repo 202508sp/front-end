@@ -8,6 +8,9 @@
 	import { authStore } from '$lib/stores/auth.svelte';
 	import UserMenu from '$lib/components/auth/UserMenu.svelte';
 	import PermissionGate from '$lib/components/auth/PermissionGate.svelte';
+	import { routeManager } from '$lib/utils/routes';
+	import { componentLoader } from '$lib/utils/componentLoader';
+	import { lazyLoadOnIdle } from '$lib/utils/intersectionObserver';
 
 	type Menu = {
 		name: string;
@@ -46,6 +49,30 @@
 		updateTime();
 		const interval = setInterval(updateTime, 1000);
 		return () => clearInterval(interval);
+	});
+
+	// パフォーマンス最適化: 重要なルートとコンポーネントのプリロード
+	$effect(() => {
+		// 認証状態が変更されたときにプリロードを実行
+		if (authStore.isAuthenticated) {
+			const user = authStore.user;
+			if (user) {
+				// ユーザーの権限に基づいてルートをプリロード
+				routeManager.preloadUserRoutes(user.permissions || [], user.roles || []);
+				
+				// アイドル時間にコンポーネントをプリロード
+				lazyLoadOnIdle(() => {
+					componentLoader.preloadByPriority('high');
+				}, 1000);
+				
+				lazyLoadOnIdle(() => {
+					componentLoader.preloadByPriority('medium');
+				}, 3000);
+			}
+		} else {
+			// 未認証時は重要なルートのみプリロード
+			routeManager.preloadCriticalRoutes();
+		}
 	});
 </script>
 
