@@ -762,3 +762,102 @@ export function validateStaffData(staff: Partial<import('../types/staff.js').Sta
 
   return errors;
 }
+/**
+
+ * カラーコードのバリデーション
+ */
+export function validateColor(value: string): string | null {
+  if (typeof value !== 'string') {
+    return 'カラーコードは文字列である必要があります';
+  }
+
+  // HEXカラーコードの形式をチェック
+  const hexPattern = /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/;
+  if (!hexPattern.test(value)) {
+    return '有効なHEXカラーコード（例: #FF0000）を入力してください';
+  }
+
+  return null;
+}
+
+/**
+ * タイムゾーンのバリデーション
+ */
+export function validateTimezone(value: string): string | null {
+  if (typeof value !== 'string') {
+    return 'タイムゾーンは文字列である必要があります';
+  }
+
+  try {
+    // Intl.DateTimeFormatでタイムゾーンの有効性をチェック
+    Intl.DateTimeFormat(undefined, { timeZone: value });
+    return null;
+  } catch (error) {
+    return '有効なタイムゾーンを指定してください';
+  }
+}
+
+/**
+ * 言語コードのバリデーション
+ */
+export function validateLanguage(value: string): string | null {
+  const supportedLanguages = ['ja', 'en'];
+  
+  if (!supportedLanguages.includes(value)) {
+    return `サポートされている言語は ${supportedLanguages.join(', ')} です`;
+  }
+
+  return null;
+}
+
+/**
+ * 日付形式のバリデーション
+ */
+export function validateDateFormat(value: string): string | null {
+  const supportedFormats = ['YYYY/MM/DD', 'MM/DD/YYYY', 'DD/MM/YYYY', 'YYYY-MM-DD'];
+  
+  if (!supportedFormats.includes(value)) {
+    return `サポートされている日付形式は ${supportedFormats.join(', ')} です`;
+  }
+
+  return null;
+}
+
+/**
+ * 時刻形式のバリデーション
+ */
+export function validateTimeFormat(value: string): string | null {
+  const supportedFormats = ['12h', '24h'];
+  
+  if (!supportedFormats.includes(value)) {
+    return `サポートされている時刻形式は ${supportedFormats.join(', ')} です`;
+  }
+
+  return null;
+}
+
+/**
+ * 設定値の汎用バリデーション
+ */
+export function validateSettingValue(key: string, value: any): string | null {
+  switch (key) {
+    case 'theme.colors.primary':
+    case 'theme.colors.secondary':
+      return validateColor(value);
+    
+    case 'timezone':
+      return validateTimezone(value);
+    
+    case 'language':
+      return validateLanguage(value);
+    
+    case 'dateFormat':
+      return validateDateFormat(value);
+    
+    case 'timeFormat':
+      return validateTimeFormat(value);
+    
+    default:
+      return null;
+  }
+}
