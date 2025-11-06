@@ -25,3 +25,6 @@ export type * from './common';
 
 // Family types
 export type * from './family';
+
+// Auth types
+export type * from './auth';
