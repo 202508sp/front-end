@@ -22,3 +22,6 @@ export type * from './statistics';
 
 // Common types
 export type * from './common';
+
+// Family types
+export type * from './family';
