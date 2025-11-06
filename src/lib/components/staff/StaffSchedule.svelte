@@ -189,15 +189,15 @@
   const weekDays = ['日', '月', '火', '水', '木', '金', '土'];
 </script>
 
-<div class="flex flex-col h:full {className}" data-testid={testId}>
+<div class="flex flex:column h:full {className}" data-testid={testId}>
   <!-- Header -->
   <div class="flex-shrink:0 p:4 border-b:1|solid|care-gray-200 bg:care-background-primary">
-    <div class="flex items-center justify-between mb:4">
+    <div class="flex ai:center jc:space-betwrrn mb:4">
       <h2 class="text:xl font:semibold text:care-text-primary">
         職員スケジュール
       </h2>
       
-      <div class="flex items-center gap:2">
+      <div class="flex ai:center gap:2">
         <!-- View Mode Buttons -->
         <div class="flex border:1|solid|care-gray-300 r:16px overflow:hidden">
           <button
@@ -230,8 +230,8 @@
     </div>
 
     <!-- Navigation -->
-    <div class="flex items-center justify-between">
-      <div class="flex items-center gap:2">
+    <div class="flex ai:center jc:space-betwrrn">
+      <div class="flex ai:center gap:2">
         <Button variant="outline" size="sm" onclick={navigatePrevious}>
           {#snippet children()}
             <svg class="w:4 h:4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -278,9 +278,9 @@
           
           {#each getSchedulesForDate(currentDate) as schedule}
             <div class="border:1|solid|care-gray-200 r:24px p:4">
-              <div class="flex items-center justify-between">
+              <div class="flex ai:center jc:space-betwrrn">
                 <div class="flex-1">
-                  <div class="flex items-center gap:3 mb:2">
+                  <div class="flex ai:center gap:3 mb:2">
                     <h5 class="font:medium text:care-text-primary">{schedule.staffName}</h5>
                     <span class="px:2 py:1 {getShiftColor(schedule.shiftType)} text:xs r:9999px">
                       {getShiftLabel(schedule.shiftType)}
@@ -388,20 +388,20 @@
 
   <!-- Legend -->
   <div class="flex-shrink:0 p:4 border-t:1|solid|care-gray-200 bg:care-background-primary">
-    <div class="flex items-center justify-center gap:6 text:sm">
-      <div class="flex items-center gap:2">
+    <div class="flex ai:center jc:center gap:6 text:sm">
+      <div class="flex ai:center gap:2">
         <div class="w:3 h:3 bg:blue-500 r:9999px"></div>
         <span class="text:care-text-secondary">日勤</span>
       </div>
-      <div class="flex items-center gap:2">
+      <div class="flex ai:center gap:2">
         <div class="w:3 h:3 bg:orange-500 r:9999px"></div>
         <span class="text:care-text-secondary">夕勤</span>
       </div>
-      <div class="flex items-center gap:2">
+      <div class="flex ai:center gap:2">
         <div class="w:3 h:3 bg:purple-500 r:9999px"></div>
         <span class="text:care-text-secondary">夜勤</span>
       </div>
-      <div class="flex items-center gap:2">
+      <div class="flex ai:center gap:2">
         <div class="w:3 h:3 bg:green-500 r:9999px"></div>
         <span class="text:care-text-secondary">オンコール</span>
       </div>

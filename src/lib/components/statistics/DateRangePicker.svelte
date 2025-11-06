@@ -136,7 +136,7 @@
 <div class={`date-range-picker ${className}`}>
   <!-- Period Selection -->
   <div class="period-selector mb:16px">
-    <div class="block text:14px font:600 mb:8px text:gray-700">期間選択</div>
+    <div class="block text:14px  mb:8px text:gray-700">期間選択</div>
     <div class="flex flex-wrap gap:8px">
       {#each periodOptions as option}
         <Button
@@ -177,7 +177,7 @@
 
       <!-- Quick Presets -->
       <div class="quick-presets mt:12px">
-        <div class="block text:12px font:500 mb:6px text:gray-600">クイック選択</div>
+        <div class="block text:12px  mb:6px text:gray-600">クイック選択</div>
         <div class="flex flex-wrap gap:6px">
           {#each quickPresets as preset}
             <Button
@@ -196,8 +196,8 @@
   <!-- Current Selection Display -->
   {#if value}
     <div class="current-selection p:12px bg:gray-50 r:6px">
-      <div class="text:12px font:500 text:gray-600 mb:4px">選択中の期間</div>
-      <div class="text:14px font:600 text:gray-800">
+      <div class="text:12px  text:gray-600 mb:4px">選択中の期間</div>
+      <div class="text:14px  text:gray-800">
         {formatDisplayDate(value.start)} ～ {formatDisplayDate(value.end)}
       </div>
     </div>

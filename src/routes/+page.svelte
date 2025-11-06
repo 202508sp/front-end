@@ -126,7 +126,7 @@
 		{#if visibleCards.length === 0 && !isEditMode}
 			<!-- 空の状態 -->
 			<div
-				class="empty-dashboard ai:center jc:center min-h:400px bg:white r:12px b:2|dashed|gray-300 flex flex-col"
+				class="empty-dashboard ai:center jc:center min-h:400px bg:white r:12px b:2|dashed|gray-300 flex flex:column"
 			>
 				<Icon
 					icon="material-symbols:dashboard-outline"

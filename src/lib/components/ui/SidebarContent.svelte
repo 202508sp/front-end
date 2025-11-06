@@ -83,7 +83,7 @@
 							{/if}
 
 							<div class="flex:1 min-w:0">
-								<div class="font:500 text:14px truncate">
+								<div class=" text:14px truncate">
 									{item.title}
 								</div>
 								{#if item.subtitle}
@@ -96,7 +96,7 @@
 							{#if item.badge}
 								<div class="
 									flex-shrink:0 px:6px py:2px r:9999px
-									bg:red-100 text:red-700 text:11px font:600
+									bg:red-100 text:red-700 text:11px 
 									min-w:20px text:center
 								">
 									{item.badge}

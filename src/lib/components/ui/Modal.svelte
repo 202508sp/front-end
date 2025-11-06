@@ -78,7 +78,7 @@
 
 {#if isOpen}
   <div
-    class="fixed inset:0 z:modal flex items-center justify-center p:4"
+    class="fixed inset:0 z:modal flex ai:center jc:center p:4"
     data-testid={testId}
     role="dialog"
     aria-modal="true"
@@ -96,7 +96,7 @@
     >
       <!-- Header -->
       {#if title || closable}
-        <div class="flex items-center justify-between p:6 border-b:1|solid|care-gray-200">
+        <div class="flex ai:center jc:space-betwrrn p:6 border-b:1|solid|care-gray-200">
           {#if title}
             <h2 id="modal-title" class="text:xl font:semibold text:care-text-primary">
               {title}

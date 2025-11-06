@@ -173,10 +173,10 @@
   }
 </script>
 
-<div class="flex flex-col h:full {className}" data-testid={testId}>
+<div class="flex flex:column h:full {className}" data-testid={testId}>
   <!-- Header with search and controls -->
   <div class="flex-shrink:0 p:4 border-b:1|solid|care-gray-200 bg:care-background-primary">
-    <div class="flex items-center justify-between mb:4">
+    <div class="flex ai:center jc:space-betwrrn mb:4">
       <h2 class="text:xl font:semibold text:care-text-primary">
         職員一覧
         <span class="text:sm font:normal text:care-text-secondary ml:2">
@@ -184,7 +184,7 @@
         </span>
       </h2>
       
-      <div class="flex items-center gap:2">
+      <div class="flex ai:center gap:2">
         <Button
           variant="outline"
           size="sm"
@@ -234,7 +234,7 @@
           <legend class="block text:sm font:medium text:care-text-primary mb:2">役職</legend>
           <div class="space-y:1">
             {#each roleOptions as option}
-              <label class="flex items-center">
+              <label class="flex ai:center">
                 <input
                   type="checkbox"
                   checked={selectedRoles.includes(option.value)}
@@ -253,7 +253,7 @@
           <legend class="block text:sm font:medium text:care-text-primary mb:2">部署</legend>
           <div class="space-y:1">
             {#each departmentOptions as option}
-              <label class="flex items-center">
+              <label class="flex ai:center">
                 <input
                   type="checkbox"
                   checked={selectedDepartments.includes(option.value)}
@@ -272,7 +272,7 @@
           <legend class="block text:sm font:medium text:care-text-primary mb:2">ステータス</legend>
           <div class="space-y:1">
             {#each statusOptions as option}
-              <label class="flex items-center">
+              <label class="flex ai:center">
                 <input
                   type="checkbox"
                   checked={selectedStatus.includes(option.value)}
@@ -289,9 +289,9 @@
     {/if}
 
     <!-- Sort and Items per page -->
-    <div class="flex items-center justify-between mt:4">
-      <div class="flex items-center gap:4">
-        <div class="flex items-center gap:2">
+    <div class="flex ai:center jc:space-betwrrn mt:4">
+      <div class="flex ai:center gap:4">
+        <div class="flex ai:center gap:2">
           <label for="sort-select" class="text:sm font:medium text:care-text-primary">並び順:</label>
           <select
             id="sort-select"
@@ -306,7 +306,7 @@
           </select>
         </div>
 
-        <div class="flex items-center gap:2">
+        <div class="flex ai:center gap:2">
           <label for="items-per-page-select" class="text:sm font:medium text:care-text-primary">表示件数:</label>
           <select
             id="items-per-page-select"
@@ -326,7 +326,7 @@
 
   <!-- Loading state -->
   {#if staffStore.isLoading}
-    <div class="flex-1 flex items-center justify-center">
+    <div class="flex-1 flex ai:center jc:center">
       <div class="text:center">
         <svg class="animate:spin h:8 w:8 text:care-primary-600 mx:auto mb:2" fill="none" viewBox="0 0 24 24">
           <circle class="opacity:25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -337,7 +337,7 @@
     </div>
   {:else if staffStore.error}
     <!-- Error state -->
-    <div class="flex-1 flex items-center justify-center">
+    <div class="flex-1 flex ai:center jc:center">
       <div class="text:center">
         <svg class="h:8 w:8 text:care-accent-error-500 mx:auto mb:2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
@@ -356,7 +356,7 @@
     </div>
   {:else if staffStore.paginatedStaff.length === 0}
     <!-- Empty state -->
-    <div class="flex-1 flex items-center justify-center">
+    <div class="flex-1 flex ai:center jc:center">
       <div class="text:center">
         <svg class="h:12 w:12 text:care-gray-400 mx:auto mb:4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -387,9 +387,9 @@
               }
             }}
           >
-            <div class="flex items-center justify-between">
+            <div class="flex ai:center jc:space-betwrrn">
               <div class="flex-1">
-                <div class="flex items-center gap:3 mb:2">
+                <div class="flex ai:center gap:3 mb:2">
                   <h3 class="text:lg font:medium text:care-text-primary">
                     {staff.name}
                   </h3>
@@ -458,14 +458,14 @@
     <!-- Pagination -->
     {#if staffStore.totalPages > 1}
       <div class="flex-shrink:0 p:4 border-t:1|solid|care-gray-200 bg:care-background-primary">
-        <div class="flex items-center justify-between">
+        <div class="flex ai:center jc:space-betwrrn">
           <div class="text:sm text:care-text-secondary">
             {((staffStore.currentPage - 1) * staffStore.itemsPerPage) + 1} - 
             {Math.min(staffStore.currentPage * staffStore.itemsPerPage, staffStore.sortedStaff.length)} 件 / 
             {staffStore.sortedStaff.length} 件中
           </div>
           
-          <div class="flex items-center gap:1">
+          <div class="flex ai:center gap:1">
             <Button
               variant="outline"
               size="sm"

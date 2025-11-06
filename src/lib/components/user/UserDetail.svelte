@@ -158,24 +158,27 @@
 <div class="flex:col h:full flex">
 	{#if isEditMode}
 		<!-- Edit Mode Header -->
-		<div class="p:4 border-b:1|solid|gray-200 bg:blue-50">
-			<div class="items:center justify:between flex">
+		<div class="p:16px border-b:2|solid|imemo-brown-200 bg:imemo-beige-100">
+			<div class="flex ai:center jc:space-betwrrn">
 				<div>
-					<h3 class="text:lg font:semibold text:blue-900">編集モード</h3>
-					<p class="text:sm text:blue-700">利用者情報を編集しています</p>
+					<h3 class="font:18px  text:imemo-brown-700">編集モード</h3>
+					<p class="font:14px text:imemo-brown-600">利用者情報を編集しています</p>
 				</div>
-				<div class="gap:2 flex">
-					<Button variant="outline" size="sm" onclick={handleCancel} disabled={isSaving}>
+				<div class="flex gap:8px">
+					<button
+						onclick={handleCancel}
+						disabled={isSaving}
+						class="px:16px py:10px bg:white border:1|solid|imemo-brown-300 text:imemo-brown-700 r:8px font:14px  hover:bg:imemo-beige-50 transition-colors disabled:opacity:50 disabled:cursor:not-allowed"
+					>
 						キャンセル
-					</Button>
-					<Button 
-						variant="primary" 
-						size="sm" 
-						onclick={handleSave} 
+					</button>
+					<button
+						onclick={handleSave}
 						disabled={isValidating || isSaving}
+						class="px:16px py:10px bg:imemo-brown-400 text:white r:8px font:14px  hover:bg:imemo-brown-500 transition-colors disabled:opacity:50 disabled:cursor:not-allowed flex ai:center gap:8px"
 					>
 						{#if isSaving}
-							<svg class="animate:spin w:4 h:4 mr:2" fill="none" viewBox="0 0 24 24">
+							<svg class="animate:spin w:16px h:16px" fill="none" viewBox="0 0 24 24">
 								<circle class="opacity:25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
 								<path class="opacity:75" fill="currentColor" d="m4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
 							</svg>
@@ -185,26 +188,26 @@
 						{:else}
 							保存
 						{/if}
-					</Button>
+					</button>
 				</div>
 			</div>
 		</div>
 
 		<!-- Validation Errors -->
 		{#if validationErrors.length > 0}
-			<div class="p:4 bg:red-50 border-b:1|solid|red-200">
-				<div class="items:start flex">
-					<svg class="w:5 h:5 text:red-500 mt:0.5 mr:2 flex-shrink:0" fill="currentColor" viewBox="0 0 20 20">
+			<div class="p:16px bg:imemo-pink border-b:2|solid|imemo-pink">
+				<div class="flex items-start gap:12px">
+					<svg class="w:24px h:24px text:white flex-shrink:0" fill="currentColor" viewBox="0 0 20 20">
 						<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
 					</svg>
-					<div class="flex:1">
-						<h4 class="text:sm font:medium text:red-800 mb:1">入力内容に問題があります</h4>
-						<ul class="text:sm text:red-700 space-y:1">
+					<div class="flex-1">
+						<h4 class="font:16px  text:white mb:8px">入力内容に問題があります</h4>
+						<ul class="font:14px text:white flex flex:column gap:4px">
 							{#each validationErrors.slice(0, 5) as error}
 								<li>• {error.message}</li>
 							{/each}
 							{#if validationErrors.length > 5}
-								<li class="text:red-600">他 {validationErrors.length - 5} 件のエラー</li>
+								<li class="opacity:80">他 {validationErrors.length - 5} 件のエラー</li>
 							{/if}
 						</ul>
 					</div>
@@ -214,56 +217,32 @@
 	{/if}
 
 	<!-- Tab Navigation -->
-	<div class="border-b:1|solid|gray-200 bg:gray-50">
+	<div class="border-b:2|solid|imemo-brown-200 bg:imemo-beige-50">
 		<nav class="flex">
 			<button
 				type="button"
-				class="
-					px:4 py:3 text:sm font:medium border-b:2|solid|transparent
-					{activeTab === 'basic'
-					? 'text:blue-600 border-b-color:blue-600 bg:white'
-					: 'text:gray-500 hover:text:gray-700'}
-					transition:all|200ms
-				"
+				class="px:16px py:12px font:14px  border-b:3|solid|transparent transition-all {activeTab === 'basic' ? 'text:imemo-brown-700 border-b-color:imemo-brown-400 bg:white' : 'text:imemo-brown-500 hover:text:imemo-brown-700 hover:bg:imemo-beige-100'}"
 				onclick={() => (activeTab = 'basic')}
 			>
 				基本情報
 			</button>
 			<button
 				type="button"
-				class="
-					px:4 py:3 text:sm font:medium border-b:2|solid|transparent
-					{activeTab === 'medical'
-					? 'text:blue-600 border-b-color:blue-600 bg:white'
-					: 'text:gray-500 hover:text:gray-700'}
-					transition:all|200ms
-				"
+				class="px:16px py:12px font:14px  border-b:3|solid|transparent transition-all {activeTab === 'medical' ? 'text:imemo-brown-700 border-b-color:imemo-brown-400 bg:white' : 'text:imemo-brown-500 hover:text:imemo-brown-700 hover:bg:imemo-beige-100'}"
 				onclick={() => (activeTab = 'medical')}
 			>
 				医療情報
 			</button>
 			<button
 				type="button"
-				class="
-					px:4 py:3 text:sm font:medium border-b:2|solid|transparent
-					{activeTab === 'family'
-					? 'text:blue-600 border-b-color:blue-600 bg:white'
-					: 'text:gray-500 hover:text:gray-700'}
-					transition:all|200ms
-				"
+				class="px:16px py:12px font:14px  border-b:3|solid|transparent transition-all {activeTab === 'family' ? 'text:imemo-brown-700 border-b-color:imemo-brown-400 bg:white' : 'text:imemo-brown-500 hover:text:imemo-brown-700 hover:bg:imemo-beige-100'}"
 				onclick={() => (activeTab = 'family')}
 			>
 				家族情報
 			</button>
 			<button
 				type="button"
-				class="
-					px:4 py:3 text:sm font:medium border-b:2|solid|transparent
-					{activeTab === 'notes'
-					? 'text:blue-600 border-b-color:blue-600 bg:white'
-					: 'text:gray-500 hover:text:gray-700'}
-					transition:all|200ms
-				"
+				class="px:16px py:12px font:14px  border-b:3|solid|transparent transition-all {activeTab === 'notes' ? 'text:imemo-brown-700 border-b-color:imemo-brown-400 bg:white' : 'text:imemo-brown-500 hover:text:imemo-brown-700 hover:bg:imemo-beige-100'}"
 				onclick={() => (activeTab = 'notes')}
 			>
 				記録・メモ
@@ -272,7 +251,7 @@
 	</div>
 
 	<!-- Tab Content -->
-	<div class="flex:1 overflow:auto p:4">
+	<div class="flex-1 overflow-auto p:16px bg:imemo-beige-50">
 		{#if activeTab === 'basic'}
 			<!-- Basic Information -->
 			<div class="space-y:6">

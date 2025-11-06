@@ -60,13 +60,13 @@
 </script>
 
 <div
-  class="flex flex-col h:full bg:care-background-primary r:8px shadow:lg overflow:hidden {className}"
+  class="flex flex:column h:full bg:care-background-primary r:8px shadow:lg overflow:hidden {className}"
   data-testid={testId}
 >
   <!-- Chat Header -->
-  <div class="flex items-center justify-between p:4 border-b:1|solid|care-gray-200 bg:care-background-secondary">
-    <div class="flex items-center space-x:3">
-      <div class="flex items-center space-x:2">
+  <div class="flex ai:center jc:space-betwrrn p:4 border-b:1|solid|care-gray-200 bg:care-background-secondary">
+    <div class="flex ai:center space-x:3">
+      <div class="flex ai:center space-x:2">
         <div class="w:3 h:3 r:9999px bg:care-accent-success-500" title="オンライン"></div>
         <h3 class="font:semibold text:care-text-primary">{chatRoom.name}</h3>
       </div>
@@ -78,19 +78,19 @@
       {/if}
     </div>
 
-    <div class="flex items-center space-x:2">
+    <div class="flex ai:center space-x:2">
       <!-- Participants indicator -->
       <div class="flex -space-x:1">
         {#each chatRoom.participants.slice(0, 3) as participant}
           <div
-            class="w:8 h:8 r:9999px bg:care-primary-100 border:2|solid|care-background-primary flex items-center justify-center text:xs font:medium text:care-primary-700"
+            class="w:8 h:8 r:9999px bg:care-primary-100 border:2|solid|care-background-primary flex ai:center jc:center text:xs font:medium text:care-primary-700"
             title={participant.name}
           >
             {participant.name.charAt(0)}
           </div>
         {/each}
         {#if chatRoom.participants.length > 3}
-          <div class="w:8 h:8 r:9999px bg:care-gray-100 border:2|solid|care-background-primary flex items-center justify-center text:xs font:medium text:care-gray-600">
+          <div class="w:8 h:8 r:9999px bg:care-gray-100 border:2|solid|care-background-primary flex ai:center jc:center text:xs font:medium text:care-gray-600">
             +{chatRoom.participants.length - 3}
           </div>
         {/if}

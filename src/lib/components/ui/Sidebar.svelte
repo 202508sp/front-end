@@ -186,7 +186,7 @@
 					<div class="flex:1 min-w:0">
 						{#if title}
 							<h2 id="sidebar-title" class="
-								font:600 text:16px text:gray-900 truncate
+								 text:16px text:gray-900 truncate
 								@md:text:18px
 							">
 								{title}
