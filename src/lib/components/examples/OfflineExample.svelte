@@ -161,7 +161,7 @@
   <!-- 状態表示 -->
   <div class="grid grid-cols:1 md:grid-cols:2 gap:16px mb:24px">
     <!-- データサービス状態 -->
-    <div class="bg:white p:16px rounded:8px shadow:sm border:1px|solid|gray-200">
+    <div class="bg:white p:16px r:8px shadow:sm border:1px|solid|gray-200">
       <h2 class="text:16px font:semibold mb:12px">データサービス状態</h2>
       <div class="space-y:8px text:14px">
         <div class="flex justify:between">
@@ -196,7 +196,7 @@
     </div>
 
     <!-- キャッシュ状態 -->
-    <div class="bg:white p:16px rounded:8px shadow:sm border:1px|solid|gray-200">
+    <div class="bg:white p:16px r:8px shadow:sm border:1px|solid|gray-200">
       <h2 class="text:16px font:semibold mb:12px">キャッシュ状態</h2>
       <div class="space-y:8px text:14px">
         <div class="flex justify:between">
@@ -228,7 +228,7 @@
     <button
       onclick={loadUsers}
       disabled={isLoading}
-      class="px:16px py:8px bg:blue-600 text:white rounded:6px hover:bg:blue-700 disabled:opacity:50 disabled:cursor:not-allowed"
+      class="px:16px py:8px bg:blue-600 text:white r:6px hover:bg:blue-700 disabled:opacity:50 disabled:cursor:not-allowed"
     >
       {isLoading ? '読み込み中...' : 'データ再読み込み'}
     </button>
@@ -236,7 +236,7 @@
     <button
       onclick={createTestUser}
       disabled={isLoading}
-      class="px:16px py:8px bg:green-600 text:white rounded:6px hover:bg:green-700 disabled:opacity:50 disabled:cursor:not-allowed"
+      class="px:16px py:8px bg:green-600 text:white r:6px hover:bg:green-700 disabled:opacity:50 disabled:cursor:not-allowed"
     >
       テストユーザー作成
     </button>
@@ -244,7 +244,7 @@
     <button
       onclick={forceSync}
       disabled={isLoading || !dataState.isOnline}
-      class="px:16px py:8px bg:purple-600 text:white rounded:6px hover:bg:purple-700 disabled:opacity:50 disabled:cursor:not-allowed"
+      class="px:16px py:8px bg:purple-600 text:white r:6px hover:bg:purple-700 disabled:opacity:50 disabled:cursor:not-allowed"
     >
       強制同期
     </button>
@@ -252,7 +252,7 @@
     <button
       onclick={clearCache}
       disabled={isLoading}
-      class="px:16px py:8px bg:red-600 text:white rounded:6px hover:bg:red-700 disabled:opacity:50 disabled:cursor:not-allowed"
+      class="px:16px py:8px bg:red-600 text:white r:6px hover:bg:red-700 disabled:opacity:50 disabled:cursor:not-allowed"
     >
       キャッシュクリア
     </button>
@@ -260,13 +260,13 @@
 
   <!-- エラー表示 -->
   {#if error}
-    <div class="bg:red-50 border:1px|solid|red-200 text:red-700 px:16px py:12px rounded:6px mb:24px">
+    <div class="bg:red-50 border:1px|solid|red-200 text:red-700 px:16px py:12px r:6px mb:24px">
       <strong>エラー:</strong> {error}
     </div>
   {/if}
 
   <!-- 利用者一覧 -->
-  <div class="bg:white rounded:8px shadow:sm border:1px|solid|gray-200">
+  <div class="bg:white r:8px shadow:sm border:1px|solid|gray-200">
     <div class="px:16px py:12px border-b:1px|solid|gray-200">
       <h2 class="text:16px font:semibold">利用者一覧 ({users.length}件)</h2>
     </div>
@@ -283,7 +283,7 @@
       {:else}
         <div class="space-y:8px">
           {#each users as user (user.id)}
-            <div class="flex justify:between items:center p:12px bg:gray-50 rounded:6px">
+            <div class="flex justify:between items:center p:12px bg:gray-50 r:6px">
               <div>
                 <div class="font:medium">{user.name}</div>
                 <div class="text:14px text:gray-600">{user.nameKana}</div>
@@ -299,7 +299,7 @@
   </div>
 
   <!-- 使用方法 -->
-  <div class="mt:32px bg:blue-50 border:1px|solid|blue-200 rounded:8px p:16px">
+  <div class="mt:32px bg:blue-50 border:1px|solid|blue-200 r:8px p:16px">
     <h3 class="text:16px font:semibold mb:12px text:blue-800">オフライン機能の使用方法</h3>
     <ol class="list-decimal list-inside space-y:4px text:14px text:blue-700">
       <li>ブラウザの開発者ツールでネットワークを無効にしてオフライン状態をシミュレート</li>

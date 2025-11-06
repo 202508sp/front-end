@@ -214,7 +214,8 @@ export class ComponentLoader {
     }
 
     const key = `component:${componentPath}`;
-    return lazyLoader.loadComponent(definition.loader, key);
+    const module = await definition.loader();
+    return module.default;
   }
 
   /**

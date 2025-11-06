@@ -92,7 +92,7 @@
 
     <!-- Modal Content -->
     <div
-      class="relative bg:care-background-primary rounded:2xl shadow:2xl w:full {sizeClasses[size]} max-h:90vh overflow:hidden animate:scale-in {className}"
+      class="relative bg:care-background-primary r:6px shadow:2xl w:full {sizeClasses[size]} max-h:90vh overflow:hidden animate:scale-in {className}"
     >
       <!-- Header -->
       {#if title || closable}
@@ -105,7 +105,7 @@
           {#if closable}
             <button
               type="button"
-              class="text:care-gray-400 hover:text:care-gray-600 transition-colors p:1 rounded:md hover:bg:care-gray-100"
+              class="text:care-gray-400 hover:text:care-gray-600 transition-colors p:1 r:16px hover:bg:care-gray-100"
               onclick={handleClose}
               aria-label="モーダルを閉じる"
             >

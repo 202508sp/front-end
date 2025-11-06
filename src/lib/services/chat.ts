@@ -4,7 +4,6 @@
  */
 
 import { 
-  getDatabase, 
   ref, 
   push, 
   set, 
@@ -14,15 +13,17 @@ import {
   orderByChild, 
   limitToLast,
   serverTimestamp,
+  type Database,
   type DatabaseReference,
   type Unsubscribe
 } from 'firebase/database';
 import { 
-  getStorage, 
   ref as storageRef, 
   uploadBytes, 
-  getDownloadURL 
+  getDownloadURL,
+  type FirebaseStorage
 } from 'firebase/storage';
+import { database, storage, isFirebaseConfigured } from '$lib/firebase';
 import type { 
   ChatRoom, 
   ChatMessage, 
@@ -33,14 +34,44 @@ import type {
 } from '$lib/types/chat.js';
 
 export class ChatService {
-  private db = getDatabase();
-  private storage = getStorage();
+  private db: Database;
+  private storage: FirebaseStorage;
   private listeners: Map<string, Unsubscribe> = new Map();
+  private isAvailable: boolean;
+
+  constructor() {
+    this.isAvailable = isFirebaseConfigured();
+    
+    if (this.isAvailable) {
+      this.db = database;
+      this.storage = storage;
+    } else {
+      console.warn('Firebase is not configured. Chat functionality will be disabled.');
+      // モックオブジェクトを設定
+      this.db = {} as Database;
+      this.storage = {} as FirebaseStorage;
+    }
+  }
+
+  /**
+   * Firebase設定状態を確認
+   */
+  private checkFirebaseAvailable(): boolean {
+    if (!this.isAvailable) {
+      console.warn('Firebase is not available. Chat operation skipped.');
+      return false;
+    }
+    return true;
+  }
 
   /**
    * チャットルームを作成
    */
   async createChatRoom(userId: string, participants: Participant[]): Promise<string> {
+    if (!this.checkFirebaseAvailable()) {
+      throw new Error('Firebase is not available');
+    }
+    
     const chatRoomsRef = ref(this.db, 'chatRooms');
     const newChatRoomRef = push(chatRoomsRef);
     
@@ -67,6 +98,10 @@ export class ChatService {
    * チャットルーム一覧を取得
    */
   async getChatRooms(userId?: string): Promise<ChatRoom[]> {
+    if (!this.checkFirebaseAvailable()) {
+      return [];
+    }
+    
     return new Promise((resolve, reject) => {
       const chatRoomsRef = ref(this.db, 'chatRooms');
       const chatRoomsQuery = userId 
@@ -99,6 +134,10 @@ export class ChatService {
    * チャットルームをリアルタイムで監視
    */
   subscribeToChartRoom(chatRoomId: string, callback: (chatRoom: ChatRoom | null) => void): () => void {
+    if (!this.checkFirebaseAvailable()) {
+      return () => {}; // 空の関数を返す
+    }
+    
     const chatRoomRef = ref(this.db, `chatRooms/${chatRoomId}`);
     
     const unsubscribe = onValue(chatRoomRef, (snapshot) => {
@@ -202,6 +241,10 @@ export class ChatService {
     content: string, 
     attachments?: File[]
   ): Promise<string> {
+    if (!this.checkFirebaseAvailable()) {
+      throw new Error('Firebase is not available');
+    }
+    
     // ファイルをアップロード
     const uploadedAttachments: Attachment[] = [];
     if (attachments && attachments.length > 0) {
@@ -415,5 +458,15 @@ export class ChatService {
   }
 }
 
-// シングルトンインスタンス
-export const chatService = new ChatService();
+// 遅延初期化されるシングルトンインスタンス
+let _chatService: ChatService | null = null;
+
+export function getChatService(): ChatService {
+  if (!_chatService) {
+    _chatService = new ChatService();
+  }
+  return _chatService;
+}
+
+// 後方互換性のためのエクスポート
+export const chatService = getChatService();

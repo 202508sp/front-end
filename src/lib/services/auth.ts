@@ -9,10 +9,11 @@ import {
   createUserWithEmailAndPassword,
   sendPasswordResetEmail,
   updateProfile,
+  type Auth,
   type User as FirebaseUser,
   type Unsubscribe
 } from 'firebase/auth';
-import { auth } from '../firebase.js';
+import { auth, isFirebaseConfigured } from '../firebase.js';
 import type {
   AuthUser,
   LoginCredentials,
@@ -28,14 +29,43 @@ import type {
 export class AuthService {
   private authStateListeners: ((user: AuthUser | null) => void)[] = [];
   private currentUser: AuthUser | null = null;
+  private auth: Auth | null = null;
+  private isAvailable: boolean;
+
+  constructor() {
+    this.isAvailable = isFirebaseConfigured();
+    
+    if (this.isAvailable) {
+      this.auth = auth;
+    } else {
+      console.warn('Firebase Auth is not configured. Authentication functionality will be disabled.');
+      // モックオブジェクトを設定
+      this.auth = {} as Auth;
+    }
+  }
+
+  /**
+   * Firebase Auth設定状態を確認
+   */
+  private checkAuthAvailable(): boolean {
+    if (!this.isAvailable || !this.auth) {
+      console.warn('Firebase Auth is not available. Auth operation skipped.');
+      return false;
+    }
+    return true;
+  }
 
   /**
    * メールアドレスとパスワードでログイン
    */
   async signIn(credentials: LoginCredentials): Promise<AuthUser> {
+    if (!this.checkAuthAvailable()) {
+      throw new Error('Firebase Auth is not available');
+    }
+    
     try {
       const userCredential = await signInWithEmailAndPassword(
-        auth,
+        this.auth!,
         credentials.email,
         credentials.password
       );
@@ -58,8 +88,15 @@ export class AuthService {
    * ログアウト
    */
   async signOut(): Promise<void> {
+    if (!this.checkAuthAvailable()) {
+      // Firebase未設定でも現在のユーザーをクリア
+      this.currentUser = null;
+      this.notifyAuthStateChange(null);
+      return;
+    }
+    
     try {
-      await signOut(auth);
+      await signOut(this.auth!);
       this.currentUser = null;
       this.notifyAuthStateChange(null);
     } catch (error: any) {
@@ -111,7 +148,11 @@ export class AuthService {
     this.authStateListeners.push(callback);
 
     // Firebase認証状態の監視
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+    if (!this.checkAuthAvailable()) {
+      return () => {}; // 空の関数を返す
+    }
+    
+    const unsubscribe = onAuthStateChanged(this.auth!, async (firebaseUser) => {
       if (firebaseUser) {
         const authUser = this.mapFirebaseUser(firebaseUser);
         await this.loadUserInfo(authUser);
@@ -283,5 +324,15 @@ export class AuthService {
   }
 }
 
-// シングルトンインスタンス
-export const authService = new AuthService();
+// 遅延初期化されるシングルトンインスタンス
+let _authService: AuthService | null = null;
+
+export function getAuthService(): AuthService {
+  if (!_authService) {
+    _authService = new AuthService();
+  }
+  return _authService;
+}
+
+// 後方互換性のためのエクスポート
+export const authService = getAuthService();

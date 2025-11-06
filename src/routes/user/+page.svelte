@@ -68,7 +68,7 @@
 
 	<!-- Notification -->
 	{#if notification}
-		<div class="mb:4 p:4 rounded:lg border {notification.type === 'success' ? 'bg:green-50 border:green-200' : 'bg:red-50 border:red-200'} flex items:center justify:between">
+		<div class="mb:4 p:4 r:24px border {notification.type === 'success' ? 'bg:green-50 border:green-200' : 'bg:red-50 border:red-200'} flex items:center justify:between">
 			<div class="flex items:center">
 				{#if notification.type === 'success'}
 					<svg class="w:5 h:5 text:green-500 mr:2" fill="currentColor" viewBox="0 0 20 20">
@@ -98,7 +98,7 @@
 
 	<div class="h:screen-80">
 		<!-- 利用者一覧 -->
-		<div class="bg:care-background-primary rounded:lg shadow:sm border:1|solid|care-gray-200 overflow:hidden h:full">
+		<div class="bg:care-background-primary r:24px shadow:sm border:1|solid|care-gray-200 overflow:hidden h:full">
 			<UserList onUserSelect={handleUserSelect} class="h:full" />
 		</div>
 	</div>

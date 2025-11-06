@@ -150,7 +150,7 @@
 
       <!-- ページ番号 -->
       <div class="pagination-pages">
-        {#each visiblePages as page}
+        {#each visiblePages() as page}
           {#if page === '...'}
             <span class="pagination-ellipsis">...</span>
           {:else}

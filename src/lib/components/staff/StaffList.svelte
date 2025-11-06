@@ -228,7 +228,7 @@
 
     <!-- Filters -->
     {#if showFilters}
-      <div class="grid grid-cols:1 md:grid-cols:2 lg:grid-cols:4 gap:4 p:4 bg:care-gray-50 rounded:lg">
+      <div class="grid grid-cols:1 md:grid-cols:2 lg:grid-cols:4 gap:4 p:4 bg:care-gray-50 r:24px">
         <!-- Role Filter -->
         <fieldset>
           <legend class="block text:sm font:medium text:care-text-primary mb:2">役職</legend>
@@ -296,7 +296,7 @@
           <select
             id="sort-select"
             onchange={handleSortChange}
-            class="px:3 py:1 border:1|solid|care-gray-300 rounded:md text:sm"
+            class="px:3 py:1 border:1|solid|care-gray-300 r:16px text:sm"
             data-testid="sort-select"
           >
             {#each sortOptions as option}
@@ -312,7 +312,7 @@
             id="items-per-page-select"
             value={staffStore.itemsPerPage}
             onchange={handleItemsPerPageChange}
-            class="px:3 py:1 border:1|solid|care-gray-300 rounded:md text:sm"
+            class="px:3 py:1 border:1|solid|care-gray-300 r:16px text:sm"
             data-testid="items-per-page-select"
           >
             {#each itemsPerPageOptions as option}
@@ -396,11 +396,11 @@
                   <span class="text:sm text:care-text-secondary">
                     ({staff.nameKana})
                   </span>
-                  <span class="px:2 py:1 bg:care-secondary-100 text:care-secondary-700 text:xs rounded:full">
+                  <span class="px:2 py:1 bg:care-secondary-100 text:care-secondary-700 text:xs r:9999px">
                     {getRoleLabel(staff.role)}
                   </span>
                   {#if !staff.isActive}
-                    <span class="px:2 py:1 bg:care-gray-100 text:care-gray-700 text:xs rounded:full">
+                    <span class="px:2 py:1 bg:care-gray-100 text:care-gray-700 text:xs r:9999px">
                       非アクティブ
                     </span>
                   {/if}

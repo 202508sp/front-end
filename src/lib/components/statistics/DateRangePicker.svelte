@@ -159,7 +159,7 @@
             type="date"
             bind:value={startDateInput}
             onchange={handleCustomDateChange}
-            class="w:full p:8px border:1px border:gray-300 rounded:6px focus:border:blue-500 focus:outline:none"
+            class="w:full p:8px border:1px border:gray-300 r:6px focus:border:blue-500 focus:outline:none"
             id="start-date-input"
           />
         </FormField>
@@ -169,7 +169,7 @@
             type="date"
             bind:value={endDateInput}
             onchange={handleCustomDateChange}
-            class="w:full p:8px border:1px border:gray-300 rounded:6px focus:border:blue-500 focus:outline:none"
+            class="w:full p:8px border:1px border:gray-300 r:6px focus:border:blue-500 focus:outline:none"
             id="end-date-input"
           />
         </FormField>
@@ -195,7 +195,7 @@
 
   <!-- Current Selection Display -->
   {#if value}
-    <div class="current-selection p:12px bg:gray-50 rounded:6px">
+    <div class="current-selection p:12px bg:gray-50 r:6px">
       <div class="text:12px font:500 text:gray-600 mb:4px">選択中の期間</div>
       <div class="text:14px font:600 text:gray-800">
         {formatDisplayDate(value.start)} ～ {formatDisplayDate(value.end)}

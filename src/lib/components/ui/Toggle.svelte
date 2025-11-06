@@ -62,7 +62,7 @@
 
   // Switch classes
   const switchClasses = `
-    relative inline-flex ${currentSize.switch} rounded:full transition-colors duration:200 ease-in-out
+    relative inline-flex ${currentSize.switch} r:9999px transition-colors duration:200 ease-in-out
     ${checked 
       ? 'bg:care-primary-600' 
       : 'bg:care-gray-200'
@@ -75,7 +75,7 @@
 
   // Thumb classes
   const thumbClasses = `
-    inline-block ${currentSize.thumb} rounded:full bg:white shadow:md transform transition-transform duration:200 ease-in-out
+    inline-block ${currentSize.thumb} r:9999px bg:white shadow:md transform transition-transform duration:200 ease-in-out
     ${checked ? currentSize.translate : 'translate-x:1'}
   `;
 </script>

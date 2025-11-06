@@ -137,7 +137,7 @@
       </div>
       
       {#if unreadCount > 0}
-        <div class="bg:care-accent-error-100 text:care-accent-error-700 px:2 py:1 rounded:md text:sm">
+        <div class="bg:care-accent-error-100 text:care-accent-error-700 px:2 py:1 r:16px text:sm">
           未読メッセージ: {unreadCount}件
         </div>
       {/if}
@@ -147,7 +147,7 @@
     <div class="flex-1 overflow-y:auto">
       {#if isLoading}
         <div class="flex items-center justify-center p:8">
-          <div class="animate:spin w:6 h:6 border:2|solid|care-primary-600 border-t:transparent rounded:full"></div>
+          <div class="animate:spin w:6 h:6 border:2|solid|care-primary-600 border-t:transparent r:9999px"></div>
         </div>
       {:else if chatRooms.length === 0}
         <div class="p:4 text:center text:care-text-secondary">
@@ -161,14 +161,14 @@
         <div class="space-y:1 p:2">
           {#each chatRooms as chatRoom}
             <button
-              class="w:full text-left p:3 rounded:lg hover:bg:care-primary-50 transition-colors {currentChatRoom?.id === chatRoom.id ? 'bg:care-primary-100 border:1|solid|care-primary-300' : ''}"
+              class="w:full text-left p:3 r:24px hover:bg:care-primary-50 transition-colors {currentChatRoom?.id === chatRoom.id ? 'bg:care-primary-100 border:1|solid|care-primary-300' : ''}"
               onclick={() => selectChatRoom(chatRoom)}
               data-testid="chat-room-item"
             >
               <div class="flex items-center justify-between mb:1">
                 <h3 class="font:medium text:care-text-primary truncate">{chatRoom.name}</h3>
                 {#if chatRoom.unreadCount > 0}
-                  <span class="bg:care-accent-error-500 text:care-text-inverse text:xs px:1.5 py:0.5 rounded:full min-w:5 text-center">
+                  <span class="bg:care-accent-error-500 text:care-text-inverse text:xs px:1.5 py:0.5 r:9999px min-w:5 text-center">
                     {chatRoom.unreadCount}
                   </span>
                 {/if}
@@ -238,7 +238,7 @@
         type="text"
         bind:value={newRoomUserId}
         placeholder="例: user_001"
-        class="w:full px:3 py:2 border:care-gray-300 rounded:lg focus:border:care-primary-500 focus:ring:care-primary-500"
+        class="w:full px:3 py:2 border:care-gray-300 r:24px focus:border:care-primary-500 focus:ring:care-primary-500"
         data-testid="new-room-user-id"
       />
     </div>
@@ -252,7 +252,7 @@
         type="text"
         bind:value={newRoomUserName}
         placeholder="例: 山田 花子"
-        class="w:full px:3 py:2 border:care-gray-300 rounded:lg focus:border:care-primary-500 focus:ring:care-primary-500"
+        class="w:full px:3 py:2 border:care-gray-300 r:24px focus:border:care-primary-500 focus:ring:care-primary-500"
         data-testid="new-room-user-name"
       />
     </div>

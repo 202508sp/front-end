@@ -8,6 +8,10 @@
     LineElement,
     BarElement,
     ArcElement,
+    BarController,
+    LineController,
+    DoughnutController,
+    PieController,
     Title,
     Tooltip,
     Legend,
@@ -24,6 +28,10 @@
     LineElement,
     BarElement,
     ArcElement,
+    BarController,
+    LineController,
+    DoughnutController,
+    PieController,
     Title,
     Tooltip,
     Legend,
@@ -117,16 +125,22 @@
     }
   });
 
-  // Reactive updates
+  // Reactive updates - recreate chart when type or options change
   $effect(() => {
-    if (chart && data) {
-      updateChart();
+    // Track dependencies
+    type;
+    options;
+    
+    if (canvas) {
+      createChart();
     }
   });
 
+  // Update chart data without recreating
   $effect(() => {
-    if (type || options) {
-      createChart();
+    if (chart) {
+      chart.data = data;
+      chart.update('none'); // Update without animation to prevent loops
     }
   });
 </script>

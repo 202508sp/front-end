@@ -58,7 +58,9 @@
 			const user = authStore.user;
 			if (user) {
 				// ユーザーの権限に基づいてルートをプリロード
-				routeManager.preloadUserRoutes(user.permissions || [], user.roles || []);
+				const permissions = user.staffInfo?.permissions || [];
+				const roles = user.staffInfo?.role ? [user.staffInfo.role] : [];
+				routeManager.preloadUserRoutes(permissions, roles);
 				
 				// アイドル時間にコンポーネントをプリロード
 				lazyLoadOnIdle(() => {

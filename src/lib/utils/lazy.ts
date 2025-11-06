@@ -3,13 +3,13 @@
  * コンポーネントとモジュールの動的インポートを管理
  */
 
-import type { ComponentType } from 'svelte';
+import type { Component } from 'svelte';
 
 /**
  * 遅延読み込み可能なコンポーネントの型定義
  */
 export interface LazyComponent<T = any> {
-  component: ComponentType;
+  component: Component;
   loading: boolean;
   error: Error | null;
   props?: T;
@@ -27,9 +27,9 @@ export class LazyLoader {
    * コンポーネントを遅延読み込み
    */
   async loadComponent<T = any>(
-    importFn: () => Promise<{ default: ComponentType }>,
+    importFn: () => Promise<any>,
     key: string
-  ): Promise<ComponentType> {
+  ): Promise<Component> {
     // キャッシュから取得
     if (this.cache.has(key)) {
       return this.cache.get(key);
@@ -136,9 +136,9 @@ export const lazyLoader = new LazyLoader();
  * 遅延読み込み用のヘルパー関数
  */
 export function lazy<T = any>(
-  importFn: () => Promise<{ default: ComponentType }>,
+  importFn: () => Promise<any>,
   key?: string
-): () => Promise<ComponentType> {
+): () => Promise<Component> {
   const cacheKey = key || importFn.toString();
   
   return () => lazyLoader.loadComponent(importFn, cacheKey);

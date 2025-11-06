@@ -199,7 +199,7 @@
       
       <div class="flex items-center gap:2">
         <!-- View Mode Buttons -->
-        <div class="flex border:1|solid|care-gray-300 rounded:md overflow:hidden">
+        <div class="flex border:1|solid|care-gray-300 r:16px overflow:hidden">
           <button
             type="button"
             class="px:3 py:1 text:sm {viewMode === 'day' ? 'bg:care-primary-500 text:white' : 'bg:white text:care-text-primary hover:bg:care-gray-50'}"
@@ -269,7 +269,7 @@
             <h4 class="text:lg font:medium text:care-text-primary">
               {formatDate(currentDate)}
               {#if isToday(currentDate)}
-                <span class="ml:2 px:2 py:1 bg:care-primary-100 text:care-primary-700 text:xs rounded:full">
+                <span class="ml:2 px:2 py:1 bg:care-primary-100 text:care-primary-700 text:xs r:9999px">
                   今日
                 </span>
               {/if}
@@ -277,16 +277,16 @@
           </div>
           
           {#each getSchedulesForDate(currentDate) as schedule}
-            <div class="border:1|solid|care-gray-200 rounded:lg p:4">
+            <div class="border:1|solid|care-gray-200 r:24px p:4">
               <div class="flex items-center justify-between">
                 <div class="flex-1">
                   <div class="flex items-center gap:3 mb:2">
                     <h5 class="font:medium text:care-text-primary">{schedule.staffName}</h5>
-                    <span class="px:2 py:1 {getShiftColor(schedule.shiftType)} text:xs rounded:full">
+                    <span class="px:2 py:1 {getShiftColor(schedule.shiftType)} text:xs r:9999px">
                       {getShiftLabel(schedule.shiftType)}
                     </span>
                     <span class="
-                      px:2 py:1 text:xs rounded:full
+                      px:2 py:1 text:xs r:9999px
                       {schedule.isConfirmed ? 'bg:green-100 text:green-800' : 'bg:yellow-100 text:yellow-800'}
                     ">
                       {schedule.isConfirmed ? '確定' : '未確定'}
@@ -326,11 +326,11 @@
           
           <!-- Week dates -->
           {#each viewDates as date, index}
-            <div class="min-h:32 p:2 border:1|solid|care-gray-200 rounded:md {isToday(date) ? 'bg:care-primary-50 border-care-primary-300' : 'bg:white'}">
+            <div class="min-h:32 p:2 border:1|solid|care-gray-200 r:16px {isToday(date) ? 'bg:care-primary-50 border-care-primary-300' : 'bg:white'}">
               <div class="text:sm font:medium text:care-text-primary mb:2">
                 {date.getDate()}
                 {#if isToday(date)}
-                  <span class="ml:1 w:2 h:2 bg:care-primary-500 rounded:full inline-block"></span>
+                  <span class="ml:1 w:2 h:2 bg:care-primary-500 r:9999px inline-block"></span>
                 {/if}
               </div>
               
@@ -363,7 +363,7 @@
               <div class="text:xs {isCurrentMonth(date) ? 'text:care-text-primary' : 'text:care-text-secondary'} mb:1">
                 {date.getDate()}
                 {#if isToday(date)}
-                  <span class="ml:1 w:1.5 h:1.5 bg:care-primary-500 rounded:full inline-block"></span>
+                  <span class="ml:1 w:1.5 h:1.5 bg:care-primary-500 r:9999px inline-block"></span>
                 {/if}
               </div>
               
@@ -390,19 +390,19 @@
   <div class="flex-shrink:0 p:4 border-t:1|solid|care-gray-200 bg:care-background-primary">
     <div class="flex items-center justify-center gap:6 text:sm">
       <div class="flex items-center gap:2">
-        <div class="w:3 h:3 bg:blue-500 rounded:full"></div>
+        <div class="w:3 h:3 bg:blue-500 r:9999px"></div>
         <span class="text:care-text-secondary">日勤</span>
       </div>
       <div class="flex items-center gap:2">
-        <div class="w:3 h:3 bg:orange-500 rounded:full"></div>
+        <div class="w:3 h:3 bg:orange-500 r:9999px"></div>
         <span class="text:care-text-secondary">夕勤</span>
       </div>
       <div class="flex items-center gap:2">
-        <div class="w:3 h:3 bg:purple-500 rounded:full"></div>
+        <div class="w:3 h:3 bg:purple-500 r:9999px"></div>
         <span class="text:care-text-secondary">夜勤</span>
       </div>
       <div class="flex items-center gap:2">
-        <div class="w:3 h:3 bg:green-500 rounded:full"></div>
+        <div class="w:3 h:3 bg:green-500 r:9999px"></div>
         <span class="text:care-text-secondary">オンコール</span>
       </div>
     </div>

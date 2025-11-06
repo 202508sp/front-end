@@ -457,7 +457,7 @@
       <!-- ローディング状態 -->
       <div class="loading flex items:center justify:center h:full">
         <div class="text:center">
-          <Icon icon="material-symbols:progress-activity" class="w:32px h:32px text:blue-500 animate:spin mb:12px" />
+          <Icon icon="material-symbols:progress-activity" class="w:32px h:32px text:blue-500 mb:12px" style="animation: spin 1s linear infinite;" />
           <p class="text:gray-600">読み込み中...</p>
         </div>
       </div>
@@ -537,9 +537,7 @@
     flex-direction: column;
   }
 
-  .animate\:spin {
-    animation: spin 1s linear infinite;
-  }
+
 
   @keyframes spin {
     from {

@@ -3,7 +3,7 @@
  * 動的インポートによるルートレベルのコード分割を実装
  */
 
-import type { ComponentType } from 'svelte';
+import type { Component } from 'svelte';
 import { lazyLoader } from './lazy';
 
 /**
@@ -11,7 +11,7 @@ import { lazyLoader } from './lazy';
  */
 export interface RouteDefinition {
   path: string;
-  component: () => Promise<{ default: ComponentType }>;
+  component: () => Promise<any>;
   preload?: boolean;
   permissions?: string[];
   roles?: string[];
@@ -91,7 +91,7 @@ export class RouteManager {
   /**
    * ルートコンポーネントを遅延読み込み
    */
-  async loadRoute(routeName: string): Promise<ComponentType> {
+  async loadRoute(routeName: string): Promise<Component> {
     const route = routes[routeName];
     if (!route) {
       throw new Error(`Route not found: ${routeName}`);

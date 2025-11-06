@@ -195,7 +195,7 @@
 >
   {#if isLoading && messages.length === 0}
     <div class="flex items-center justify-center h:full">
-      <div class="animate:spin w:8 h:8 border:2|solid|care-primary-600 border-t:transparent rounded:full"></div>
+      <div class="animate:spin w:8 h:8 border:2|solid|care-primary-600 border-t:transparent r:9999px"></div>
     </div>
   {:else if messages.length === 0}
     <div class="flex items-center justify-center h:full text:care-text-secondary">
@@ -216,7 +216,7 @@
     <!-- Load more indicator -->
     {#if isLoading && messages.length > 0}
       <div class="flex justify-center py:2">
-        <div class="animate:spin w:6 h:6 border:2|solid|care-primary-600 border-t:transparent rounded:full"></div>
+        <div class="animate:spin w:6 h:6 border:2|solid|care-primary-600 border-t:transparent r:9999px"></div>
       </div>
     {/if}
 
@@ -224,7 +224,7 @@
     {#each groupedMessages() as group}
       <!-- Date header -->
       <div class="flex justify-center my:4">
-        <div class="bg:care-gray-100 text:care-text-secondary text:sm px:3 py:1 rounded:full">
+        <div class="bg:care-gray-100 text:care-text-secondary text:sm px:3 py:1 r:9999px">
           {formatDateHeader(group.date)}
         </div>
       </div>
@@ -238,7 +238,7 @@
           <div class="max-w:70% {isOwnMessage(message) ? 'order-2' : 'order-1'}">
             <!-- Message bubble -->
             <div
-              class="rounded:2xl px:4 py:2 {isOwnMessage(message) 
+              class="r:6px px:4 py:2 {isOwnMessage(message) 
                 ? 'bg:care-primary-600 text:care-text-inverse' 
                 : 'bg:care-background-secondary text:care-text-primary'
               } {message.isDeleted ? 'opacity:50 italic' : ''}"
@@ -247,11 +247,11 @@
                 <div class="text:xs font:medium mb:1 text:care-text-secondary">
                   {message.senderName}
                   {#if message.senderType === 'staff'}
-                    <span class="bg:care-accent-info-100 text:care-accent-info-700 px:1.5 py:0.5 rounded:md text:xs ml:1">
+                    <span class="bg:care-accent-info-100 text:care-accent-info-700 px:1.5 py:0.5 r:16px text:xs ml:1">
                       職員
                     </span>
                   {:else if message.senderType === 'family'}
-                    <span class="bg:care-accent-warning-100 text:care-accent-warning-700 px:1.5 py:0.5 rounded:md text:xs ml:1">
+                    <span class="bg:care-accent-warning-100 text:care-accent-warning-700 px:1.5 py:0.5 r:16px text:xs ml:1">
                       家族
                     </span>
                   {/if}
@@ -269,7 +269,7 @@
                 {#if message.attachments.length > 0}
                   <div class="mt:2 space-y:1">
                     {#each message.attachments as attachment}
-                      <div class="flex items-center space-x:2 p:2 bg:black/10 rounded:lg">
+                      <div class="flex items-center space-x:2 p:2 bg:black/10 r:24px">
                         <svg class="w:4 h:4 flex-shrink:0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
                         </svg>
@@ -330,7 +330,7 @@
   <!-- Scroll to bottom button -->
   {#if !isAtBottom && messages.length > 0}
     <button
-      class="fixed bottom:20 right:20 bg:care-primary-600 text:care-text-inverse p:3 rounded:full shadow:lg hover:bg:care-primary-700 transition-colors z:10"
+      class="fixed bottom:20 right:20 bg:care-primary-600 text:care-text-inverse p:3 r:9999px shadow:lg hover:bg:care-primary-700 transition-colors z:10"
       onclick={scrollToBottom}
       aria-label="最新メッセージに移動"
     >

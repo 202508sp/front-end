@@ -360,7 +360,7 @@
             >
               <select
                 bind:value={editedStaff.role}
-                class="w:full px:3 py:2 border:1|solid|gray-300 rounded:md focus:outline:2|solid|blue-500 {hasFieldError('役職') ? 'border-red-500 focus:border-red-500' : ''}"
+                class="w:full px:3 py:2 border:1|solid|gray-300 r:16px focus:outline:2|solid|blue-500 {hasFieldError('役職') ? 'border-red-500 focus:border-red-500' : ''}"
               >
                 <option value="">選択してください</option>
                 {#each roleOptions as option}
@@ -407,7 +407,7 @@
           <div class="space-y:6">
             <!-- Profile Header -->
             <div class="items:start gap:4 flex">
-              <div class="w:16 h:16 bg:gray-200 rounded:full items:center justify:center flex">
+              <div class="w:16 h:16 bg:gray-200 r:9999px items:center justify:center flex">
                 <svg class="w:8 h:8 text:gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                 </svg>
@@ -424,7 +424,7 @@
               <div class="text:right">
                 <span
                   class="
-                  px:3 py:1 text:sm rounded:full
+                  px:3 py:1 text:sm r:9999px
                   {staff.isActive ? 'bg:green-100 text:green-800' : 'bg:gray-100 text:gray-800'}
                 "
                 >
@@ -479,12 +479,12 @@
           
           <div class="space-y:4">
             {#each permissionOptions as option}
-              <div class="border:1|solid|gray-200 rounded:lg p:4">
+              <div class="border:1|solid|gray-200 r:24px p:4">
                 <div class="items:start justify:between flex">
                   <div class="flex:1">
                     <div class="items:center gap:3 flex">
                       <h5 class="font:medium text:gray-900">{option.label}</h5>
-                      <span class="px:2 py:1 bg:gray-100 text:gray-600 text:xs rounded:full font:mono">
+                      <span class="px:2 py:1 bg:gray-100 text:gray-600 text:xs r:9999px font:mono">
                         {option.value}
                       </span>
                     </div>
@@ -499,7 +499,7 @@
                       />
                     {:else}
                       <span class="
-                        px:2 py:1 text:xs rounded:full
+                        px:2 py:1 text:xs r:9999px
                         {hasPermission(option.value) 
                           ? 'bg:green-100 text:green-800' 
                           : 'bg:gray-100 text:gray-600'}
@@ -531,7 +531,7 @@
             </div>
             <div class="space-y:4">
               {#each editedStaff.qualifications as qualification, index}
-                <div class="border:1|solid|gray-200 rounded:md p:4">
+                <div class="border:1|solid|gray-200 r:16px p:4">
                   <div class="items:start justify:between mb:3 flex">
                     <h5 class="font:medium text:gray-900">資格 {index + 1}</h5>
                     <button
@@ -587,7 +587,7 @@
             {#if staff.qualifications.length > 0}
               <div class="space-y:4">
                 {#each staff.qualifications as qualification}
-                  <div class="border:1|solid|gray-200 rounded:md p:4">
+                  <div class="border:1|solid|gray-200 r:16px p:4">
                     <div class="items:start justify:between flex">
                       <div class="flex:1">
                         <h5 class="font:medium text:gray-900">{qualification.name}</h5>
@@ -606,7 +606,7 @@
                         {@const isExpiringSoon = qualification.expiryDate.getTime() - Date.now() < 30 * 24 * 60 * 60 * 1000}
                         {@const isExpired = qualification.expiryDate.getTime() < Date.now()}
                         <span class="
-                          px:2 py:1 text:xs rounded:full
+                          px:2 py:1 text:xs r:9999px
                           {isExpired 
                             ? 'bg:red-100 text:red-800' 
                             : isExpiringSoon 
@@ -648,7 +648,7 @@
             </div>
             <div class="space-y:4">
               {#each editedStaff.schedule as schedule, index}
-                <div class="border:1|solid|gray-200 rounded:md p:4">
+                <div class="border:1|solid|gray-200 r:16px p:4">
                   <div class="items:start justify:between mb:3 flex">
                     <h5 class="font:medium text:gray-900">スケジュール {index + 1}</h5>
                     <button
@@ -676,7 +676,7 @@
                     <FormField label="シフトタイプ">
                       <select
                         bind:value={schedule.shiftType}
-                        class="w:full px:3 py:2 border:1|solid|gray-300 rounded:md focus:outline:2|solid|blue-500"
+                        class="w:full px:3 py:2 border:1|solid|gray-300 r:16px focus:outline:2|solid|blue-500"
                       >
                         <option value="day">日勤</option>
                         <option value="evening">夕勤</option>
@@ -724,18 +724,18 @@
             {#if staff.schedule.length > 0}
               <div class="space-y:4">
                 {#each staff.schedule.sort((a, b) => a.date.getTime() - b.date.getTime()) as schedule}
-                  <div class="border:1|solid|gray-200 rounded:md p:4">
+                  <div class="border:1|solid|gray-200 r:16px p:4">
                     <div class="items:start justify:between flex">
                       <div class="flex:1">
                         <div class="items:center gap:3 flex">
                           <h5 class="font:medium text:gray-900">{formatDate(schedule.date)}</h5>
-                          <span class="px:2 py:1 bg:blue-100 text:blue-800 text:xs rounded:full">
+                          <span class="px:2 py:1 bg:blue-100 text:blue-800 text:xs r:9999px">
                             {schedule.shiftType === 'day' ? '日勤' : 
                              schedule.shiftType === 'evening' ? '夕勤' : 
                              schedule.shiftType === 'night' ? '夜勤' : 'オンコール'}
                           </span>
                           <span class="
-                            px:2 py:1 text:xs rounded:full
+                            px:2 py:1 text:xs r:9999px
                             {schedule.isConfirmed ? 'bg:green-100 text:green-800' : 'bg:yellow-100 text:yellow-800'}
                           ">
                             {schedule.isConfirmed ? '確定済み' : '未確定'}

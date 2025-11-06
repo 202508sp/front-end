@@ -322,7 +322,7 @@
 						>
 							<select
 								bind:value={editedUser.gender}
-								class="w:full px:3 py:2 border:1|solid|gray-300 rounded:md focus:outline:2|solid|blue-500 {hasFieldError('性別') ? 'border-red-500 focus:border-red-500' : ''}"
+								class="w:full px:3 py:2 border:1|solid|gray-300 r:16px focus:outline:2|solid|blue-500 {hasFieldError('性別') ? 'border-red-500 focus:border-red-500' : ''}"
 							>
 								<option value="">選択してください</option>
 								<option value="male">男性</option>
@@ -337,7 +337,7 @@
 						>
 							<select
 								bind:value={editedUser.careLevel}
-								class="w:full px:3 py:2 border:1|solid|gray-300 rounded:md focus:outline:2|solid|blue-500 {hasFieldError('要介護度') ? 'border-red-500 focus:border-red-500' : ''}"
+								class="w:full px:3 py:2 border:1|solid|gray-300 r:16px focus:outline:2|solid|blue-500 {hasFieldError('要介護度') ? 'border-red-500 focus:border-red-500' : ''}"
 							>
 								<option value="">選択してください</option>
 								{#each [1, 2, 3, 4, 5] as level}
@@ -415,7 +415,7 @@
 					<div class="space-y:6">
 						<!-- Profile Header -->
 						<div class="items:start gap:4 flex">
-							<div class="w:16 h:16 bg:gray-200 rounded:full items:center justify:center flex">
+							<div class="w:16 h:16 bg:gray-200 r:9999px items:center justify:center flex">
 								<iconify-icon icon="material-symbols:person" class="w:8 h:8 text:gray-500"
 								></iconify-icon>
 							</div>
@@ -450,7 +450,7 @@
 										<dd>
 											<span
 												class="
-												px:2 py:1 text:xs rounded:full
+												px:2 py:1 text:xs r:9999px
 												{user.isActive ? 'bg:green-100 text:green-800' : 'bg:gray-100 text:gray-800'}
 											"
 											>
@@ -477,7 +477,7 @@
 						<!-- Emergency Contact -->
 						<div>
 							<h4 class="font:semibold text:gray-900 mb:2">緊急連絡先</h4>
-							<div class="bg:gray-50 p:3 rounded:md">
+							<div class="bg:gray-50 p:3 r:16px">
 								<div class="text:sm">
 									<p class="font:medium text:gray-900">
 										{user.emergencyContact.name} ({user.emergencyContact.relationship})
@@ -501,7 +501,7 @@
 						<FormField label="血液型">
 							<select
 								bind:value={editedUser.medicalInfo.bloodType}
-								class="w:full px:3 py:2 border:1|solid|gray-300 rounded:md focus:outline:2|solid|blue-500"
+								class="w:full px:3 py:2 border:1|solid|gray-300 r:16px focus:outline:2|solid|blue-500"
 							>
 								<option value="">選択してください</option>
 								<option value="A">A型</option>
@@ -535,7 +535,7 @@
 										.map((s) => s.trim())
 										.filter((s) => s);
 								}}
-								class="w:full px:3 py:2 border:1|solid|gray-300 rounded:md focus:outline:2|solid|blue-500"
+								class="w:full px:3 py:2 border:1|solid|gray-300 r:16px focus:outline:2|solid|blue-500"
 								rows="3"
 								placeholder="アレルギー情報を入力（カンマ区切り）"
 							></textarea>
@@ -556,7 +556,7 @@
 										.map((s) => s.trim())
 										.filter((s) => s);
 								}}
-								class="w:full px:3 py:2 border:1|solid|gray-300 rounded:md focus:outline:2|solid|blue-500"
+								class="w:full px:3 py:2 border:1|solid|gray-300 r:16px focus:outline:2|solid|blue-500"
 								rows="3"
 								placeholder="既往歴・疾患を入力（カンマ区切り）"
 							></textarea>
@@ -573,7 +573,7 @@
 							</div>
 							<div class="space-y:3">
 								{#each editedUser.medicalInfo.medications as medication, index}
-									<div class="border:1|solid|gray-200 rounded:md p:3">
+									<div class="border:1|solid|gray-200 r:16px p:3">
 										<div class="items:start justify:between mb:2 flex">
 											<h5 class="font:medium text:gray-900">薬 {index + 1}</h5>
 											<button
@@ -620,19 +620,19 @@
 						<!-- Basic Medical Info -->
 						<div class="grid-cols:1 @md:grid-cols:3 gap:4 grid">
 							{#if user.medicalInfo.bloodType}
-								<div class="text:center p:3 bg:red-50 rounded:md">
+								<div class="text:center p:3 bg:red-50 r:16px">
 									<div class="text:2xl font:bold text:red-600">{user.medicalInfo.bloodType}</div>
 									<div class="text:sm text:red-700">血液型</div>
 								</div>
 							{/if}
 							{#if user.medicalInfo.height}
-								<div class="text:center p:3 bg:blue-50 rounded:md">
+								<div class="text:center p:3 bg:blue-50 r:16px">
 									<div class="text:2xl font:bold text:blue-600">{user.medicalInfo.height}cm</div>
 									<div class="text:sm text:blue-700">身長</div>
 								</div>
 							{/if}
 							{#if user.medicalInfo.weight}
-								<div class="text:center p:3 bg:green-50 rounded:md">
+								<div class="text:center p:3 bg:green-50 r:16px">
 									<div class="text:2xl font:bold text:green-600">{user.medicalInfo.weight}kg</div>
 									<div class="text:sm text:green-700">体重</div>
 								</div>
@@ -649,7 +649,7 @@
 								</h4>
 								<div class="flex:wrap gap:2 flex">
 									{#each user.medicalInfo.allergies as allergy}
-										<span class="px:2 py:1 bg:orange-100 text:orange-800 text:sm rounded:full">
+										<span class="px:2 py:1 bg:orange-100 text:orange-800 text:sm r:9999px">
 											{allergy}
 										</span>
 									{/each}
@@ -663,7 +663,7 @@
 								<h4 class="font:semibold text:gray-900 mb:2">既往歴・疾患</h4>
 								<div class="flex:wrap gap:2 flex">
 									{#each user.medicalInfo.conditions as condition}
-										<span class="px:2 py:1 bg:blue-100 text:blue-800 text:sm rounded:full">
+										<span class="px:2 py:1 bg:blue-100 text:blue-800 text:sm r:9999px">
 											{condition}
 										</span>
 									{/each}
@@ -677,7 +677,7 @@
 								<h4 class="font:semibold text:gray-900 mb:3">服薬情報</h4>
 								<div class="space-y:3">
 									{#each user.medicalInfo.medications as medication}
-										<div class="border:1|solid|gray-200 rounded:md p:3">
+										<div class="border:1|solid|gray-200 r:16px p:3">
 											<div class="items:start justify:between flex">
 												<div class="flex:1">
 													<h5 class="font:medium text:gray-900">{medication.name}</h5>
@@ -708,7 +708,7 @@
 								<h4 class="font:semibold text:gray-900 mb:2">制限事項</h4>
 								<div class="flex:wrap gap:2 flex">
 									{#each user.medicalInfo.restrictions as restriction}
-										<span class="px:2 py:1 bg:red-100 text:red-800 text:sm rounded:full">
+										<span class="px:2 py:1 bg:red-100 text:red-800 text:sm r:9999px">
 											{restriction}
 										</span>
 									{/each}
@@ -733,7 +733,7 @@
 						</div>
 						<div class="space-y:4">
 							{#each editedUser.familyMembers as member, index}
-								<div class="border:1|solid|gray-200 rounded:md p:4">
+								<div class="border:1|solid|gray-200 r:16px p:4">
 									<div class="items:start justify:between mb:3 flex">
 										<h5 class="font:medium text:gray-900">家族 {index + 1}</h5>
 										<button
@@ -780,19 +780,19 @@
 						{#if user.familyMembers.length > 0}
 							<div class="space-y:4">
 								{#each user.familyMembers as member}
-									<div class="border:1|solid|gray-200 rounded:md p:4">
+									<div class="border:1|solid|gray-200 r:16px p:4">
 										<div class="items:start justify:between flex">
 											<div class="flex:1">
 												<div class="items:center gap:2 flex">
 													<h5 class="font:medium text:gray-900">{member.name}</h5>
 													{#if member.isPrimaryContact}
-														<span class="px:2 py:1 bg:blue-100 text:blue-800 text:xs rounded:full">
+														<span class="px:2 py:1 bg:blue-100 text:blue-800 text:xs r:9999px">
 															主要連絡先
 														</span>
 													{/if}
 													{#if member.hasPortalAccess}
 														<span
-															class="px:2 py:1 bg:green-100 text:green-800 text:xs rounded:full"
+															class="px:2 py:1 bg:green-100 text:green-800 text:xs r:9999px"
 														>
 															ポータル利用
 														</span>
@@ -837,7 +837,7 @@
 						</div>
 						<div class="space-y:4">
 							{#each editedUser.notes as note, index}
-								<div class="border:1|solid|gray-200 rounded:md p:4">
+								<div class="border:1|solid|gray-200 r:16px p:4">
 									<div class="items:start justify:between mb:3 flex">
 										<div class="items:center gap:2 flex">
 											<h5 class="font:medium text:gray-900">記録 {index + 1}</h5>
@@ -867,7 +867,7 @@
 									</div>
 									<textarea
 										bind:value={note.content}
-										class="w:full px:3 py:2 border:1|solid|gray-300 rounded:md focus:outline:2|solid|blue-500"
+										class="w:full px:3 py:2 border:1|solid|gray-300 r:16px focus:outline:2|solid|blue-500"
 										rows="4"
 										placeholder="記録内容を入力してください"
 									></textarea>
@@ -882,12 +882,12 @@
 						{#if user.notes.length > 0}
 							<div class="space-y:4">
 								{#each user.notes as note}
-									<div class="border:1|solid|gray-200 rounded:md p:4">
+									<div class="border:1|solid|gray-200 r:16px p:4">
 										<div class="items:start justify:between mb:2 flex">
 											<div class="items:center gap:2 flex">
 												<span
 													class="
-													px:2 py:1 text:xs rounded:full
+													px:2 py:1 text:xs r:9999px
 													{note.category === 'medical'
 														? 'bg:red-100 text:red-800'
 														: note.category === 'behavioral'
@@ -913,7 +913,7 @@
 												</span>
 												{#if note.isImportant}
 													<span
-														class="px:2 py:1 bg:yellow-100 text:yellow-800 text:xs rounded:full"
+														class="px:2 py:1 bg:yellow-100 text:yellow-800 text:xs r:9999px"
 													>
 														重要
 													</span>

@@ -265,7 +265,7 @@ export function lazyLoadOnIdle(
   callback: () => void | Promise<void>,
   timeout = 2000
 ): () => void {
-  let timeoutId: number;
+  let timeoutId: ReturnType<typeof setTimeout>;
   let isExecuted = false;
 
   const execute = async () => {

@@ -50,7 +50,7 @@
   }: Props = $props();
 
   let containerElement: HTMLDivElement;
-  let triggerElement: HTMLDivElement;
+  let triggerElement = $state<HTMLDivElement>();
   let isLoadingMore = $state(false);
 
   // 無限スクロールのトリガー設定
@@ -122,7 +122,7 @@
     <!-- 初期読み込み中 -->
     <div class="initial-loading">
       <div class="loading-spinner">
-        <Icon icon="material-symbols:progress-activity" class="w:32px h:32px text:blue-500 animate:spin" />
+        <Icon icon="material-symbols:progress-activity" class="w:32px h:32px text:blue-500" style="animation: spin 1s linear infinite;" />
       </div>
       <p class="loading-text">データを読み込み中...</p>
     </div>
@@ -149,7 +149,7 @@
           <!-- 読み込み中 -->
           <div class="loading-more">
             <div class="loading-spinner">
-              <Icon icon="material-symbols:progress-activity" class="w:24px h:24px text:blue-500 animate:spin" />
+              <Icon icon="material-symbols:progress-activity" class="w:24px h:24px text:blue-500" style="animation: spin 1s linear infinite;" />
             </div>
             <span class="loading-text">読み込み中...</span>
           </div>
@@ -285,9 +285,7 @@
     opacity: 0;
   }
 
-  .animate\:spin {
-    animation: spin 1s linear infinite;
-  }
+
 
   @keyframes spin {
     from {

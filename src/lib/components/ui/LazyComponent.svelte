@@ -113,7 +113,7 @@
   </div>
 {:else if component}
   <!-- 読み込み完了 -->
-  <component {...props} />
+  <component {...props}></component>
 {:else if !shouldLoad}
   <!-- 読み込み待機状態 -->
   <div class="lazy-waiting ai:center jc:center p:24px flex flex:col">
