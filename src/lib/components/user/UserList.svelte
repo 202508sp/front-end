@@ -200,19 +200,21 @@
 	}
 </script>
 
-<div class="h:full flex flex:column {className}" data-testid={testId}>
+<div class="h:full w:full flex:column flex {className}" data-testid={testId}>
 	<!-- Header with search and controls -->
-	<div class="flex-shrink:0 p:16px bg:imemo-beige-100 r:8px m:16px box-shadow:md">
-		<div class="mb:16px flex ai:center jc:space-betwrrn">
-			<div class="gap:8px flex ai:center">
+	<div
+		class="flex-shrink:0 w:100% flex:row ai:center jc:space-between px:16px py:10px bg:imemo-beige-100 box-shadow:md bb:4px|double|var(--color-tertiary) flex"
+	>
+		<div class="ai:center jc:space-betwrrn flex">
+			<div class="gap:8px ai:center flex">
 				<svg class="w:24px h:24px" fill="currentColor" viewBox="0 0 24 24">
 					<path
 						d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"
 					/>
 				</svg>
-				<h2 class="font:20px text:imemo-brown-700">利用者　一覧</h2>
+				<h2 class="font:20px text:imemo-brown-700">利用者一覧</h2>
 			</div>
-			<div class="gap:8px bg:imemo-beige-50 px:12px py:6px r:8px flex ai:center">
+			<div class="gap:8px bg:imemo-beige-50 px:12px py:6px r:8px ai:center flex">
 				<span class="font:14px text:imemo-brown-600"> 結果 </span>
 				<span class="font:14px text:imemo-brown-700">
 					{userStore.sortedUsers.length}件
@@ -221,7 +223,7 @@
 		</div>
 
 		<!-- Search and Filter Controls -->
-		<div class="gap:8px mb:16px flex ai:center">
+		<div class="gap:8px ai:center flex">
 			<div class="rel flex-1">
 				<svg
 					class="abs left:12px top:50% translateY(-50%) w:16px h:16px text:imemo-brown-400"
@@ -246,7 +248,7 @@
 			</div>
 			<button
 				onclick={() => (showFilters = !showFilters)}
-				class="gap:6px px:16px py:10px bg:imemo-brown-400 text:white r:8px font:14px  hover:bg:imemo-brown-500 border:none flex cursor-pointer ai:center transition-colors"
+				class="gap:6px px:16px py:10px bg:imemo-brown-400 fg:var(--color-text) r:8px font:14px hover:bg:imemo-brown-500 border:none ai:center flex cursor-pointer transition-colors"
 				data-testid="toggle-filters"
 			>
 				<svg class="w:16px h:16px" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -262,7 +264,7 @@
 			<button
 				aria-label="buttons"
 				onclick={clearFilters}
-				class="gap:6px px:16px py:10px bg:white border:1|solid|imemo-brown-300 text:imemo-brown-600 r:8px font:14px  hover:bg:imemo-beige-50 flex cursor-pointer ai:center transition-colors"
+				class="gap:6px px:16px py:10px bg:white border:1|solid|imemo-brown-300 text:imemo-brown-600 r:8px font:14px hover:bg:imemo-beige-50 ai:center flex cursor-pointer transition-colors"
 				data-testid="clear-filters"
 			>
 				<svg class="w:16px h:16px" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -284,9 +286,9 @@
 				<!-- Care Level Filter -->
 				<fieldset>
 					<legend class="font:14px text:imemo-brown-700 mb:8px block">要介護度</legend>
-					<div class="gap:6px flex flex:column">
+					<div class="gap:6px flex:column flex">
 						{#each careLevelOptions as option}
-							<label class="flex cursor-pointer ai:center">
+							<label class="ai:center flex cursor-pointer">
 								<input
 									type="checkbox"
 									checked={selectedCareLevel.includes(option.value)}
@@ -304,9 +306,9 @@
 				<!-- Gender Filter -->
 				<fieldset>
 					<legend class="font:14px text:imemo-brown-700 mb:8px block">性別</legend>
-					<div class="gap:6px flex flex:column">
+					<div class="gap:6px flex:column flex">
 						{#each genderOptions as option}
-							<label class="flex cursor-pointer ai:center">
+							<label class="ai:center flex cursor-pointer">
 								<input
 									type="checkbox"
 									checked={selectedGender.includes(option.value)}
@@ -323,9 +325,9 @@
 				<!-- Status Filter -->
 				<fieldset>
 					<legend class="font:14px text:imemo-brown-700 mb:8px block">ステータス</legend>
-					<div class="gap:6px flex flex:column">
+					<div class="gap:6px flex:column flex">
 						{#each statusOptions as option}
-							<label class="flex cursor-pointer ai:center">
+							<label class="ai:center flex cursor-pointer">
 								<input
 									type="checkbox"
 									checked={selectedStatus.includes(option.value)}
@@ -342,7 +344,7 @@
 				<!-- Age Range Filter -->
 				<fieldset>
 					<legend class="font:14px text:imemo-brown-700 mb:8px block">年齢範囲</legend>
-					<div class="gap:8px flex ai:center">
+					<div class="gap:8px ai:center flex">
 						<input
 							type="number"
 							bind:value={ageRangeMin}
@@ -368,9 +370,9 @@
 		{/if}
 
 		<!-- Sort and Items per page -->
-		<div class="mt:16px pt:16px border-t:1|solid|imemo-brown-200 flex ai:center jc:space-betwrrn">
-			<div class="gap:16px flex ai:center">
-				<div class="gap:8px flex ai:center">
+		<div class="bt:1|solid|imemo-brown-200 ai:center jc:space-betwrrn flex">
+			<div class="gap:16px ai:center flex">
+				<div class="gap:8px ai:center flex">
 					<svg
 						class="w:16px h:16px text:imemo-brown-400"
 						fill="none"
@@ -397,7 +399,7 @@
 					</select>
 				</div>
 
-				<div class="gap:8px flex ai:center">
+				<div class="gap:8px ai:center flex">
 					<span class="font:14px text:imemo-brown-600">表示件数:</span>
 					<select
 						id="items-per-page-select"
@@ -417,7 +419,7 @@
 
 	<!-- Loading state -->
 	{#if userStore.isLoading}
-		<div class="flex flex-1 ai:center jc:center">
+		<div class="ai:center jc:center flex flex-1">
 			<div class="text:center">
 				<svg
 					class="animate:spin h:48px w:48px text:imemo-brown-400 mx:auto mb:16px"
@@ -437,7 +439,7 @@
 		</div>
 	{:else if userStore.error}
 		<!-- Error state -->
-		<div class="p:16px flex flex-1 ai:center jc:center">
+		<div class="p:16px ai:center jc:center flex flex-1">
 			<div class="text:center bg:imemo-beige-100 p:32px r:8px max-w:400px">
 				<svg
 					class="h:48px w:48px text:imemo-pink mx:auto mb:16px"
@@ -455,7 +457,7 @@
 				<p class="font:16px text:imemo-brown-700 mb:16px">{userStore.error}</p>
 				<button
 					onclick={() => userStore.loadUsers()}
-					class="px:20px py:10px bg:imemo-brown-400 text:white r:8px font:14px  hover:bg:imemo-brown-500 border:none cursor-pointer transition-colors"
+					class="px:20px py:10px bg:imemo-brown-400 text:white r:8px font:14px hover:bg:imemo-brown-500 border:none cursor-pointer transition-colors"
 				>
 					再試行
 				</button>
@@ -463,7 +465,7 @@
 		</div>
 	{:else if userStore.paginatedUsers.length === 0}
 		<!-- Empty state -->
-		<div class="p:16px flex flex-1 ai:center jc:center">
+		<div class="p:16px ai:center jc:center flex flex-1">
 			<div class="text:center bg:imemo-beige-100 p:32px r:8px max-w:400px">
 				<svg
 					class="h:64px w:64px text:imemo-brown-300 mx:auto mb:16px"
@@ -489,11 +491,13 @@
 	{:else}
 		<!-- User list -->
 		<div class="p:16px flex-1 overflow-auto">
-			<div class="gap:12px flex flex:column">
-				{#each userStore.paginatedUsers as user (user.id)}
+			<div class="gap:12px flex:column flex">
+				{#each userStore.paginatedUsers as user, i (user.id)}
 					<div
-						class="p:16px bg:imemo-beige-100 r:8px hover:box-shadow:md cursor-pointer transition-all {userStore
-							.selectedUser?.id === user.id
+						class="px:16px w:100% {i !== userStore.paginatedUsers.length - 1
+							? 'bb:2px|solid|var(--color-tertiary) pb:12px '
+							: 'pb:0px'} bg:imemo-beige-100 cursor-pointer transition-all {userStore.selectedUser?.id ===
+						user.id
 							? 'box-shadow:lg border:2|solid|imemo-brown-400'
 							: 'border:1|solid|imemo-brown-200'}"
 						onclick={() => handleUserClick(user)}
@@ -507,122 +511,36 @@
 							}
 						}}
 					>
-						<div class="flex items-start jc:space-betwrrn">
-							<div class="flex-1">
-								<div class="gap:12px mb:12px flex ai:center">
-									<div class="w:48px h:48px bg:imemo-pink r:8px flex ai:center jc:center">
-										<svg class="w:28px h:28px text:white" fill="currentColor" viewBox="0 0 24 24">
-											<path
-												d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"
-											/>
-										</svg>
-									</div>
-									<div class="flex-1">
-										<div class="gap:8px mb:4px flex ai:center">
-											<h3 class="font:18px text:imemo-brown-700">
-												{user.name}
-											</h3>
-											<span class="font:14px text:imemo-brown-500">
-												{user.nameKana}
-											</span>
-										</div>
-										<div class="gap:8px flex ai:center">
-											<span class="px:8px py:4px bg:imemo-brown-400 text:white font:12px r:4px">
-												要介護{user.careLevel}
-											</span>
-											<span class="font:14px text:imemo-brown-600">
-												{calculateAge(user.birthDate)}歳
-											</span>
-											{#if !user.isActive}
-												<span
-													class="px:8px py:4px bg:imemo-brown-200 text:imemo-brown-600 font:12px r:4px"
-												>
-													非アクティブ
-												</span>
-											{/if}
-										</div>
-									</div>
-								</div>
-
-								<div class="grid-cols:2 md:grid-cols:3 gap:12px pl:60px grid">
-									<div class="gap:2px flex flex:column">
-										<span class="font:12px text:imemo-brown-400">性別</span>
-										<span class="font:14px text:imemo-brown-700">
-											{user.gender === 'male'
-												? '男性'
-												: user.gender === 'female'
-													? '女性'
-													: 'その他'}
+						<div class="w:100%">
+							<div class="flex flex:row ai:center jc:space-between gap:24px">
+								<div class="flex ai:center">
+									<div class="gap:8px mb:4px flex:row ai:center flex">
+										<h3 class="font:18px text:imemo-brown-700">
+											{user.name}
+										</h3>
+										<span class="font:14px text:imemo-brown-500">
+											/ {user.nameKana}
 										</span>
 									</div>
-									<div class="gap:2px flex flex:column">
-										<span class="font:12px text:imemo-brown-400">入所日</span>
-										<span class="font:14px text:imemo-brown-700"
-											>{formatDate(user.admissionDate)}</span
-										>
-									</div>
-									<div class="gap:2px flex flex:column">
-										<span class="font:12px text:imemo-brown-400">更新日</span>
-										<span class="font:14px text:imemo-brown-700">{formatDate(user.updatedAt)}</span>
-									</div>
 								</div>
-
-								{#if user.medicalInfo.conditions.length > 0}
-									<div class="mt:12px pl:60px">
-										<div class="gap:6px mb:6px flex ai:center">
-											<svg
-												class="w:14px h:14px text:imemo-brown-400"
-												fill="none"
-												stroke="currentColor"
-												viewBox="0 0 24 24"
-											>
-												<path
-													stroke-linecap="round"
-													stroke-linejoin="round"
-													stroke-width="2"
-													d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-												/>
-											</svg>
-											<span class="font:12px text:imemo-brown-600">医療情報</span>
-										</div>
-										<div class="gap:6px flex flex-wrap">
-											{#each user.medicalInfo.conditions.slice(0, 3) as condition}
-												<span
-													class="px:8px py:4px bg:white border:1|solid|imemo-brown-200 text:imemo-brown-600 font:12px r:4px"
-												>
-													{condition}
-												</span>
-											{/each}
-											{#if user.medicalInfo.conditions.length > 3}
-												<span
-													class="px:8px py:4px bg:imemo-brown-100 text:imemo-brown-600 font:12px r:4px"
-												>
-													+{user.medicalInfo.conditions.length - 3}件
-												</span>
-											{/if}
-										</div>
-									</div>
-								{/if}
-							</div>
-
-							<div class="flex-shrink:0 ml:16px">
-								<button
-									class="w:32px h:32px bg:imemo-brown-400 r:8px hover:bg:imemo-brown-500 flex ai:center jc:center transition-colors"
-								>
-									<svg
-										class="w:16px h:16px text:white"
-										fill="none"
-										stroke="currentColor"
-										viewBox="0 0 24 24"
-									>
-										<path
-											stroke-linecap="round"
-											stroke-linejoin="round"
-											stroke-width="2"
-											d="M9 5l7 7-7 7"
-										/>
-									</svg>
-								</button>
+								<div class="flex:row ai:center gap:24px flex">
+									<span class="px:8px py:4px bg:imemo-brown-400 text:white font:12px r:4px">
+										要介護 {user.careLevel}
+									</span>
+									<span class="font:14px text:imemo-brown-600">
+										{calculateAge(user.birthDate)} 歳
+									</span>
+									{#if !user.isActive}
+										<span
+											class="px:8px py:4px bg:imemo-brown-200 text:imemo-brown-600 font:12px r:4px"
+										>
+											非アクティブ
+										</span>
+									{/if}
+									<span class="font:14px line-h:.2em text:imemo-brown-700">
+										{user.gender === 'male' ? '男性' : user.gender === 'female' ? '女性' : 'その他'}
+									</span>
+								</div>
 							</div>
 						</div>
 					</div>
@@ -633,7 +551,7 @@
 		<!-- Pagination -->
 		{#if userStore.totalPages > 1}
 			<div class="flex-shrink:0 p:16px bg:imemo-beige-50 border-t:1|solid|imemo-brown-200">
-				<div class="flex ai:center jc:space-betwrrn">
+				<div class="ai:center jc:space-betwrrn flex">
 					<div class="font:14px text:imemo-brown-600">
 						{(userStore.currentPage - 1) * userStore.itemsPerPage + 1} -
 						{Math.min(userStore.currentPage * userStore.itemsPerPage, userStore.sortedUsers.length)}
@@ -641,11 +559,12 @@
 						{userStore.sortedUsers.length} 件中
 					</div>
 
-					<div class="gap:6px flex ai:center">
+					<div class="gap:6px ai:center flex">
 						<button
+							aria-label="down"
 							disabled={userStore.currentPage === 1}
 							onclick={() => handlePageChange(userStore.currentPage - 1)}
-							class="w:32px h:32px bg:white border:1|solid|imemo-brown-200 r:8px hover:bg:imemo-beige-50 disabled:opacity:50 disabled:cursor:not-allowed flex ai:center jc:center transition-colors"
+							class="w:32px h:32px bg:white border:1|solid|imemo-brown-200 r:8px hover:bg:imemo-beige-50 disabled:opacity:50 disabled:cursor:not-allowed ai:center jc:center flex transition-colors"
 							data-testid="prev-page"
 						>
 							<svg
@@ -669,7 +588,7 @@
 							{:else}
 								<button
 									onclick={() => handlePageChange(page)}
-									class="min-w:32px h:32px px:12px r:8px font:14px  transition-colors {userStore.currentPage ===
+									class="min-w:32px h:32px px:12px r:8px font:14px transition-colors {userStore.currentPage ===
 									page
 										? 'bg:imemo-brown-400 text:white'
 										: 'bg:white border:1|solid|imemo-brown-200 text:imemo-brown-600 hover:bg:imemo-beige-50'}"
@@ -681,9 +600,10 @@
 						{/each}
 
 						<button
+							aria-label="down"
 							disabled={userStore.currentPage === userStore.totalPages}
 							onclick={() => handlePageChange(userStore.currentPage + 1)}
-							class="w:32px h:32px bg:white border:1|solid|imemo-brown-200 r:8px hover:bg:imemo-beige-50 disabled:opacity:50 disabled:cursor:not-allowed flex ai:center jc:center transition-colors"
+							class="w:32px h:32px bg:white border:1|solid|imemo-brown-200 r:8px hover:bg:imemo-beige-50 disabled:opacity:50 disabled:cursor:not-allowed ai:center jc:center flex transition-colors"
 							data-testid="next-page"
 						>
 							<svg

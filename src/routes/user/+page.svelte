@@ -63,20 +63,7 @@
 	}
 </script>
 
-
-<div class="p:16px bg:imemo-beige-50 min-h:100vh">
-	<!-- Page Header -->
-	<div class="mb:16px">
-		<div class="flex ai:center gap:12px mb:8px">
-			<div class="w:40px h:40px bg:imemo-brown-400 r:8px flex ai:center jc:center">
-				<svg class="w:24px h:24px text:white" fill="currentColor" viewBox="0 0 24 24">
-					<path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-				</svg>
-			</div>
-			<h1 class="font:24px  text:imemo-brown-700">利用者管理</h1>
-		</div>
-	</div>
-
+<div class="p:16px w:100% h:fit bg:imemo-beige-50">
 	<!-- Notification -->
 	{#if notification}
 		<div class="mb:16px p:16px r:8px border:2|solid {notification.type === 'success' ? 'bg:imemo-green border:imemo-green' : 'bg:imemo-pink border:imemo-pink'} flex ai:center jc:space-betwrrn box-shadow:md">
@@ -108,7 +95,7 @@
 	{/if}
 
 	<!-- User List Container -->
-	<div class="bg:white r:8px box-shadow:md overflow:hidden" style="height: calc(100vh - 140px);">
+	<div class="w:100% bg:var(--color-primary) r:16px b:2px|solid|var(--color-tertiary)">
 		<UserList onUserSelect={handleUserSelect} class="h:full" />
 	</div>
 </div>

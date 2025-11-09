@@ -23,7 +23,7 @@ import {
   getDownloadURL,
   type FirebaseStorage
 } from 'firebase/storage';
-import { database, storage, isFirebaseConfigured } from '$lib/firebase';
+import { database, storage, isFirebaseConfigured, isRealtimeDatabaseConfigured } from '$lib/firebase';
 import type { 
   ChatRoom, 
   ChatMessage, 
@@ -40,13 +40,13 @@ export class ChatService {
   private isAvailable: boolean;
 
   constructor() {
-    this.isAvailable = isFirebaseConfigured();
+    this.isAvailable = isFirebaseConfigured() && isRealtimeDatabaseConfigured();
     
-    if (this.isAvailable) {
+    if (this.isAvailable && database) {
       this.db = database;
       this.storage = storage;
     } else {
-      console.warn('Firebase is not configured. Chat functionality will be disabled.');
+      console.warn('Firebase Realtime Database is not configured. Chat functionality will be disabled.');
       // モックオブジェクトを設定
       this.db = {} as Database;
       this.storage = {} as FirebaseStorage;
