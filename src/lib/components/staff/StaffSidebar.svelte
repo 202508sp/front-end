@@ -57,7 +57,7 @@
       <button
         type="button"
         class="
-          items:center justify:center w:32px h:32px rounded:6px
+          items:center justify:center w:32px h:32px r:6px
           bg:transparent hover:bg:gray-100 transition:background-color|200ms
           focus:outline:2|solid|blue-500
           focus:outline-offset:2 flex

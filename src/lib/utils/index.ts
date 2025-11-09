@@ -13,3 +13,6 @@ export * from './formatters.js';
 
 // Drag and drop utilities
 export * from './dragdrop.js';
+
+// Auth utilities
+export * from './auth.js';

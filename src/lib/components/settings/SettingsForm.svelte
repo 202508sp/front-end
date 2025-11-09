@@ -1,204 +1,208 @@
 <script lang="ts">
-  import type { SettingGroup, SettingField, SettingsFormProps } from '$lib/types/settings';
+  import { settingsStore, type SettingItem } from '$lib/stores/settings.svelte';
+  import Button from '$lib/components/ui/Button.svelte';
+  import Toggle from '$lib/components/ui/Toggle.svelte';
   import FormField from '$lib/components/ui/FormField.svelte';
   import Input from '$lib/components/ui/Input.svelte';
-  import Toggle from '$lib/components/ui/Toggle.svelte';
-  import Button from '$lib/components/ui/Button.svelte';
+  import Card from '$lib/components/ui/Card.svelte';
+  import Icon from '@iconify/svelte';
 
-  interface Props extends SettingsFormProps {
-    class?: string;
-    'data-testid'?: string;
+  interface Props {
+    selectedCategory?: string;
+    onSave?: () => void;
+    onReset?: () => void;
   }
 
-  let {
-    groups,
-    values,
-    errors = {},
-    disabled = false,
-    onFieldChange,
-    onValidate,
-    class: className = '',
-    'data-testid': testId
-  }: Props = $props();
+  let { selectedCategory = 'general', onSave, onReset }: Props = $props();
 
-  // フィールド値の更新処理
-  function handleFieldChange(field: SettingField, newValue: any) {
-    // 型変換
-    let convertedValue = newValue;
-    
-    switch (field.type) {
-      case 'number':
-        convertedValue = newValue === '' ? null : Number(newValue);
-        break;
-      case 'boolean':
-        convertedValue = Boolean(newValue);
-        break;
-      default:
-        convertedValue = newValue;
+  // 選択されたカテゴリの設定項目を取得
+  const categoryItems = $derived(settingsStore.getItemsByCategory(selectedCategory));
+
+  // カテゴリ情報を取得
+  const categoryInfo = $derived(settingsStore.settingCategories.find(cat => cat.key === selectedCategory));
+
+  // 設定値の変更ハンドラ
+  function handleValueChange(item: SettingItem, value: any) {
+    settingsStore.setValue(item.key, value);
+  }
+
+  // 保存ハンドラ
+  async function handleSave() {
+    try {
+      await settingsStore.saveSettings();
+      onSave?.();
+    } catch (error) {
+      console.error('設定の保存に失敗しました:', error);
     }
+  }
 
-    // バリデーション（オプション）
-    if (onValidate) {
-      const error = onValidate(field.key, convertedValue);
-      if (error) {
-        return; // エラーがある場合は更新しない
-      }
+  // リセットハンドラ
+  function handleReset() {
+    settingsStore.resetCategory(selectedCategory);
+    onReset?.();
+  }
+
+  // カラーピッカーの値変更ハンドラ
+  function handleColorChange(item: SettingItem, event: Event) {
+    const target = event.target as HTMLInputElement;
+    handleValueChange(item, target.value);
+  }
+
+  // 数値入力の値変更ハンドラ
+  function handleNumberChange(item: SettingItem, event: Event) {
+    const target = event.target as HTMLInputElement;
+    const value = parseFloat(target.value);
+    if (!isNaN(value)) {
+      handleValueChange(item, value);
     }
-
-    onFieldChange(field.key, convertedValue);
-  }
-
-  // フィールド値の取得
-  function getFieldValue(field: SettingField) {
-    return values[field.key] ?? field.defaultValue;
-  }
-
-  // フィールドエラーの取得
-  function getFieldError(field: SettingField) {
-    return errors[field.key];
-  }
-
-  // フィールドの無効状態の取得
-  function isFieldDisabled(field: SettingField) {
-    return disabled || field.disabled;
   }
 </script>
 
-<div class="settings-form {className}" data-testid={testId}>
-  {#each groups as group (group.key)}
-    <div class="settings-group mb:8" data-testid="settings-group-{group.key}">
-      <!-- グループヘッダー -->
-      <div class="settings-group-header mb:6">
-        <div class="flex items-center gap:3 mb:2">
-          {#if group.icon}
-            <div class="w:6 h:6 text:care-primary-600">
-              <svg fill="currentColor" viewBox="0 0 24 24">
-                <!-- アイコンは実際の実装では適切なアイコンライブラリを使用 -->
-                <circle cx="12" cy="12" r="10"/>
-              </svg>
-            </div>
-          {/if}
-          <h3 class="text:lg font:semibold text:care-text-primary">
-            {group.label}
-          </h3>
-        </div>
-        {#if group.description}
-          <p class="text:sm text:care-text-secondary">
-            {group.description}
-          </p>
-        {/if}
+<div class="settings-form">
+  <!-- カテゴリヘッダー -->
+  {#if categoryInfo}
+    <div class="category-header mb:24px">
+      <div class="flex align-items:center gap:12px mb:8px">
+        <Icon icon={categoryInfo.icon} class="font-size:24px color:primary" />
+        <h2 class="font-size:20px font-weight:600 color:text">{categoryInfo.label}</h2>
       </div>
+      {#if categoryInfo.description}
+        <p class="color:secondary font-size:14px">{categoryInfo.description}</p>
+      {/if}
+    </div>
+  {/if}
 
-      <!-- フィールド一覧 -->
-      <div class="settings-fields space-y:4">
-        {#each group.fields.sort((a, b) => (a.order || 0) - (b.order || 0)) as field (field.key)}
-          {@const fieldValue = getFieldValue(field)}
-          {@const fieldError = getFieldError(field)}
-          {@const isDisabled = isFieldDisabled(field)}
-          
-          <FormField
-            label={field.label}
-            description={field.description}
-            error={fieldError}
-            required={field.required}
-            disabled={isDisabled}
-            data-testid="form-field-{field.key}"
-          >
-            {#if field.type === 'select'}
-              <select
-                class="w:full px:3 py:2 border:1|solid|care-gray-300 rounded:md focus:outline-none focus:ring-2 focus:ring:care-primary-500 focus:border:care-primary-500 disabled:opacity:50 disabled:cursor-not-allowed"
-                value={fieldValue}
-                disabled={isDisabled}
-                data-testid="setting-{field.key}"
-                onchange={(e) => {
-                  const target = e.target as HTMLSelectElement;
-                  handleFieldChange(field, target.value);
-                }}
-              >
-                {#if field.options}
-                  {#each field.options as option (option.value)}
-                    <option 
-                      value={option.value} 
-                      disabled={option.disabled}
-                    >
-                      {option.label}
-                    </option>
-                  {/each}
-                {/if}
-              </select>
-            {:else if field.type === 'boolean'}
-              <Toggle
-                checked={Boolean(fieldValue)}
-                disabled={isDisabled}
-                data-testid="setting-{field.key}"
-                onchange={(checked) => handleFieldChange(field, checked)}
-              />
-            {:else if field.type === 'number'}
-              <Input
-                type="number"
-                value={fieldValue ?? ''}
-                min={field.validation?.min}
-                max={field.validation?.max}
-                disabled={isDisabled}
-                data-testid="setting-{field.key}"
-                oninput={(e) => {
-                  const target = e.target as HTMLInputElement;
-                  handleFieldChange(field, target.value);
-                }}
-              />
-            {:else if field.type === 'color'}
-              <input
-                type="color"
-                class="w:full h:10 border:1|solid|care-gray-300 rounded:md focus:outline-none focus:ring-2 focus:ring:care-primary-500 focus:border:care-primary-500 disabled:opacity:50 disabled:cursor-not-allowed"
-                value={fieldValue || '#000000'}
-                disabled={isDisabled}
-                data-testid="setting-{field.key}"
-                oninput={(e) => {
-                  const target = e.target as HTMLInputElement;
-                  handleFieldChange(field, target.value);
-                }}
-              />
-            {:else if field.type === 'date'}
-              <Input
-                type="date"
-                value={fieldValue ? new Date(fieldValue).toISOString().split('T')[0] : ''}
-                disabled={isDisabled}
-                data-testid="setting-{field.key}"
-                oninput={(e) => {
-                  const target = e.target as HTMLInputElement;
-                  handleFieldChange(field, target.value ? new Date(target.value) : null);
-                }}
-              />
-            {:else if field.type === 'time'}
-              <input
-                type="time"
-                class="w:full px:3 py:2 border:1|solid|care-gray-300 rounded:md focus:outline-none focus:ring-2 focus:ring:care-primary-500 focus:border:care-primary-500 disabled:opacity:50 disabled:cursor-not-allowed"
-                value={fieldValue || ''}
-                disabled={isDisabled}
-                data-testid="setting-{field.key}"
-                oninput={(e) => {
-                  const target = e.target as HTMLInputElement;
-                  handleFieldChange(field, target.value);
-                }}
-              />
-            {:else}
-              <Input
-                type="text"
-                value={fieldValue || ''}
-                placeholder={field.description}
-                disabled={isDisabled}
-                data-testid="setting-{field.key}"
-                oninput={(e) => {
-                  const target = e.target as HTMLInputElement;
-                  handleFieldChange(field, target.value);
-                }}
-              />
+  <!-- 設定項目 -->
+  <div class="settings-items">
+    {#each categoryItems as item: SettingItem (item.key)}
+      <Card class="mb:16px">
+        <div class="setting-item p:20px">
+          <div class="setting-header mb:12px">
+            <h3 class="font-size:16px font-weight:500 color:text mb:4px">
+              {item.label}
+            </h3>
+            {#if item.description}
+              <p class="font-size:14px color:secondary line-height:1.4">
+                {item.description}
+              </p>
             {/if}
-          </FormField>
-        {/each}
+            {#if item.requiresRestart}
+              <div class="restart-notice mt:8px">
+                <Icon icon="material-symbols:info" class="font-size:16px color:warning" />
+                <span class="font-size:12px color:warning ml:4px">
+                  この設定を変更するには再起動が必要です
+                </span>
+              </div>
+            {/if}
+          </div>
+
+          <div class="setting-control">
+            {#if item.type === 'toggle'}
+              <Toggle
+                checked={settingsStore.getValue(item.key) ?? item.defaultValue}
+                onchange={(checked) => handleValueChange(item, checked)}
+                label=""
+              />
+            
+            {:else if item.type === 'select' && item.options}
+              <FormField label="" error="">
+                <select
+                  class="select w:100% p:8px border:1px|solid|#e2e8f0 border-radius:6px"
+                  value={settingsStore.getValue(item.key) ?? item.defaultValue}
+                  onchange={(e) => handleValueChange(item, (e.currentTarget as HTMLSelectElement).value)}
+                >
+                  {#each item.options as option}
+                    <option value={option.value}>{option.label}</option>
+                  {/each}
+                </select>
+              </FormField>
+            
+            {:else if item.type === 'text'}
+              <FormField label="" error="">
+                <Input
+                  type="text"
+                  value={settingsStore.getValue(item.key) ?? item.defaultValue}
+                  oninput={(e) => handleValueChange(item, (e.currentTarget as HTMLInputElement).value)}
+                  placeholder={item.label}
+                />
+              </FormField>
+            
+            {:else if item.type === 'number'}
+              <FormField label="" error="">
+                <Input
+                  type="number"
+                  value={settingsStore.getValue(item.key) ?? item.defaultValue}
+                  oninput={(e) => handleNumberChange(item, e)}
+                  placeholder={item.label}
+                />
+              </FormField>
+            
+            {:else if item.type === 'color'}
+              <div class="color-picker flex align-items:center gap:12px">
+                <input
+                  type="color"
+                  class="color-input w:48px h:32px border:1px|solid|#e2e8f0 border-radius:6px cursor:pointer"
+                  value={settingsStore.getValue(item.key) ?? item.defaultValue}
+                  onchange={(e) => handleColorChange(item, e)}
+                />
+                <Input
+                  type="text"
+                  value={settingsStore.getValue(item.key) ?? item.defaultValue}
+                  oninput={(e) => handleValueChange(item, (e.currentTarget as HTMLInputElement).value)}
+                  placeholder="#000000"
+                  class="flex:1"
+                />
+              </div>
+            {/if}
+          </div>
+        </div>
+      </Card>
+    {/each}
+  </div>
+
+  <!-- アクションボタン -->
+  <div class="actions flex gap:12px justify-content:flex-end mt:24px">
+    <Button
+      variant="secondary"
+      onclick={handleReset}
+      disabled={settingsStore.isSaving}
+    >
+      <Icon icon="material-symbols:refresh" class="mr:8px" />
+      リセット
+    </Button>
+    
+    <Button
+      variant="primary"
+      onclick={handleSave}
+      disabled={!settingsStore.isDirty || settingsStore.isSaving}
+      loading={settingsStore.isSaving}
+    >
+      <Icon icon="material-symbols:save" class="mr:8px" />
+      保存
+    </Button>
+  </div>
+
+  <!-- エラー表示 -->
+  {#if settingsStore.error}
+    <div class="error-message mt:16px p:12px bg:error-light border-radius:6px">
+      <div class="flex align-items:center gap:8px">
+        <Icon icon="material-symbols:error" class="color:error" />
+        <span class="color:error font-size:14px">{settingsStore.error}</span>
       </div>
     </div>
-  {/each}
+  {/if}
+
+  <!-- 保存成功メッセージ -->
+  {#if settingsStore.lastSaved && !settingsStore.isDirty}
+    <div class="success-message mt:16px p:12px bg:success-light border-radius:6px">
+      <div class="flex align-items:center gap:8px">
+        <Icon icon="material-symbols:check-circle" class="color:success" />
+        <span class="color:success font-size:14px">
+          設定を保存しました ({settingsStore.lastSaved.toLocaleTimeString()})
+        </span>
+      </div>
+    </div>
+  {/if}
 </div>
 
 <style>
@@ -206,33 +210,91 @@
     max-width: 800px;
   }
 
-  .settings-group {
-    background: white;
-    border: 1px solid #e5e7eb;
-    border-radius: 0.75rem;
-    padding: 1.5rem;
+  .category-header {
+    border-bottom: 1px solid #e2e8f0;
+    padding-bottom: 16px;
   }
 
-  .settings-group-header {
-    border-bottom: 1px solid #f3f4f6;
-    padding-bottom: 1rem;
-    margin-bottom: 1.5rem;
+  .setting-item {
+    border-bottom: 1px solid #f1f5f9;
   }
 
-  .settings-fields {
+  .setting-item:last-child {
+    border-bottom: none;
+  }
+
+  .setting-header {
+    flex: 1;
+  }
+
+  .setting-control {
+    min-width: 200px;
+  }
+
+  .restart-notice {
     display: flex;
-    flex-direction: column;
-    gap: 1rem;
+    align-items: center;
+    padding: 4px 8px;
+    background-color: #fef3c7;
+    border-radius: 4px;
+    border: 1px solid #f59e0b;
   }
 
-  /* レスポンシブ対応 */
+  .color-picker {
+    max-width: 300px;
+  }
+
+  .color-input {
+    appearance: none;
+    -webkit-appearance: none;
+    border: none;
+    outline: none;
+  }
+
+  .color-input::-webkit-color-swatch-wrapper {
+    padding: 0;
+  }
+
+  .color-input::-webkit-color-swatch {
+    border: none;
+    border-radius: 4px;
+  }
+
+  .select {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+    background-position: right 8px center;
+    background-repeat: no-repeat;
+    background-size: 16px 12px;
+    padding-right: 32px;
+  }
+
+  .error-message {
+    background-color: #fef2f2;
+    border: 1px solid #fecaca;
+  }
+
+  .success-message {
+    background-color: #f0fdf4;
+    border: 1px solid #bbf7d0;
+  }
+
   @media (max-width: 768px) {
-    .settings-form {
-      max-width: 100%;
+    .setting-item {
+      flex-direction: column;
+      gap: 12px;
     }
-    
-    .settings-group {
-      padding: 1rem;
+
+    .setting-control {
+      min-width: unset;
+    }
+
+    .actions {
+      flex-direction: column;
+    }
+
+    .color-picker {
+      max-width: unset;
     }
   }
 </style>

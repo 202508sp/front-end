@@ -63,44 +63,53 @@
 	}
 </script>
 
-<div class="p:6px">
-	<h1 class="text:2xl font:bold text:care-text-primary mb:6px">利用者管理</h1>
+
+<div class="p:16px bg:imemo-beige-50 min-h:100vh">
+	<!-- Page Header -->
+	<div class="mb:16px">
+		<div class="flex ai:center gap:12px mb:8px">
+			<div class="w:40px h:40px bg:imemo-brown-400 r:8px flex ai:center jc:center">
+				<svg class="w:24px h:24px text:white" fill="currentColor" viewBox="0 0 24 24">
+					<path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+				</svg>
+			</div>
+			<h1 class="font:24px  text:imemo-brown-700">利用者管理</h1>
+		</div>
+	</div>
 
 	<!-- Notification -->
 	{#if notification}
-		<div class="mb:4 p:4 rounded:lg border {notification.type === 'success' ? 'bg:green-50 border:green-200' : 'bg:red-50 border:red-200'} flex items:center justify:between">
-			<div class="flex items:center">
+		<div class="mb:16px p:16px r:8px border:2|solid {notification.type === 'success' ? 'bg:imemo-green border:imemo-green' : 'bg:imemo-pink border:imemo-pink'} flex ai:center jc:space-betwrrn box-shadow:md">
+			<div class="flex ai:center gap:12px">
 				{#if notification.type === 'success'}
-					<svg class="w:5 h:5 text:green-500 mr:2" fill="currentColor" viewBox="0 0 20 20">
+					<svg class="w:24px h:24px text:white" fill="currentColor" viewBox="0 0 20 20">
 						<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
 					</svg>
 				{:else}
-					<svg class="w:5 h:5 text:red-500 mr:2" fill="currentColor" viewBox="0 0 20 20">
+					<svg class="w:24px h:24px text:white" fill="currentColor" viewBox="0 0 20 20">
 						<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
 					</svg>
 				{/if}
-				<span class="text:sm font:medium {notification.type === 'success' ? 'text:green-800' : 'text:red-800'}">
+				<span class="font:16px  text:white">
 					{notification.message}
 				</span>
 			</div>
 			<button
 				type="button"
 				onclick={dismissNotification}
-				class="text:gray-400 hover:text:gray-600 ml:4"
+				class="text:white hover:opacity:80 transition-opacity"
 				aria-label="通知を閉じる"
 			>
-				<svg class="w:4 h:4" fill="currentColor" viewBox="0 0 20 20">
+				<svg class="w:20px h:20px" fill="currentColor" viewBox="0 0 20 20">
 					<path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
 				</svg>
 			</button>
 		</div>
 	{/if}
 
-	<div class="h:screen-80">
-		<!-- 利用者一覧 -->
-		<div class="bg:care-background-primary rounded:lg shadow:sm border:1|solid|care-gray-200 overflow:hidden h:full">
-			<UserList onUserSelect={handleUserSelect} class="h:full" />
-		</div>
+	<!-- User List Container -->
+	<div class="bg:white r:8px box-shadow:md overflow:hidden" style="height: calc(100vh - 140px);">
+		<UserList onUserSelect={handleUserSelect} class="h:full" />
 	</div>
 </div>
 

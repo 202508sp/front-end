@@ -5,9 +5,8 @@
 <script lang="ts">
 	import { dashboardStore } from '$lib/stores';
 	import Button from '$lib/components/ui/Button.svelte';
-	import CardGrid from '$lib/components/dashboard/CardGrid.svelte';
-	import CardSelector from '$lib/components/dashboard/CardSelector.svelte';
-	import CardEditModal from '$lib/components/dashboard/CardEditModal.svelte';
+	import LazyComponent from '$lib/components/ui/LazyComponent.svelte';
+	import { componentLoader } from '$lib/utils/componentLoader';
 	import type { CardTemplate, Position, DashboardCard } from '$lib/types/dashboard.js';
 	import Icon from '@iconify/svelte';
 
@@ -17,12 +16,16 @@
 	let showCardSelector = $state(false);
 	let showCardEditModal = $state(false);
 	let editingCard = $state<DashboardCard | null>(null);
+	let shouldLoadCardGrid = $state(true);
+	let shouldLoadCardSelector = $state(false);
+	let shouldLoadCardEditModal = $state(false);
 
 	function toggleEditMode() {
 		dashboardStore.toggleEditMode();
 	}
 
 	function openCardSelector() {
+		shouldLoadCardSelector = true;
 		showCardSelector = true;
 	}
 
@@ -48,6 +51,7 @@
 		const card = visibleCards.find((c) => c.id === cardId);
 		if (card) {
 			editingCard = card;
+			shouldLoadCardEditModal = true;
 			showCardEditModal = true;
 		}
 	}
@@ -122,7 +126,7 @@
 		{#if visibleCards.length === 0 && !isEditMode}
 			<!-- 空の状態 -->
 			<div
-				class="empty-dashboard ai:center jc:center min-h:400px bg:white r:12px b:2|dashed|gray-300 flex flex-col"
+				class="empty-dashboard ai:center jc:center min-h:400px bg:white r:12px b:2|dashed|gray-300 flex flex:column"
 			>
 				<Icon
 					icon="material-symbols:dashboard-outline"
@@ -141,14 +145,20 @@
 		{:else}
 			<!-- カードグリッド -->
 			<div class="cards-container jc:center flex">
-				<CardGrid
-					cards={visibleCards}
-					{gridSettings}
-					{isEditMode}
-					onCardMove={handleCardMove}
-					onCardRemove={handleCardRemove}
-					onCardEdit={handleCardEdit}
-					onCardAdd={handleCardAdd}
+				<LazyComponent
+					loader={() => componentLoader.loadComponent('dashboard/CardGrid')}
+					key="dashboard-cardgrid"
+					shouldLoad={shouldLoadCardGrid}
+					props={{
+						cards: visibleCards,
+						gridSettings,
+						isEditMode,
+						onCardMove: handleCardMove,
+						onCardRemove: handleCardRemove,
+						onCardEdit: handleCardEdit,
+						onCardAdd: handleCardAdd
+					}}
+					loadingText="ダッシュボードを読み込み中..."
 				/>
 			</div>
 		{/if}
@@ -174,20 +184,36 @@
 </div>
 
 <!-- カードセレクターモーダル -->
-<CardSelector
-	isOpen={showCardSelector}
-	templates={cardTemplates}
-	onClose={closeCardSelector}
-	onSelect={handleCardSelect}
-/>
+{#if shouldLoadCardSelector}
+	<LazyComponent
+		loader={() => componentLoader.loadComponent('dashboard/CardSelector')}
+		key="dashboard-cardselector"
+		shouldLoad={shouldLoadCardSelector}
+		props={{
+			isOpen: showCardSelector,
+			templates: cardTemplates,
+			onClose: closeCardSelector,
+			onSelect: handleCardSelect
+		}}
+		loadingText="カード選択画面を読み込み中..."
+	/>
+{/if}
 
 <!-- カード編集モーダル -->
-<CardEditModal
-	isOpen={showCardEditModal}
-	card={editingCard}
-	onClose={closeCardEditModal}
-	onSave={handleCardSave}
-/>
+{#if shouldLoadCardEditModal}
+	<LazyComponent
+		loader={() => componentLoader.loadComponent('dashboard/CardEditModal')}
+		key="dashboard-cardeditmodal"
+		shouldLoad={shouldLoadCardEditModal}
+		props={{
+			isOpen: showCardEditModal,
+			card: editingCard,
+			onClose: closeCardEditModal,
+			onSave: handleCardSave
+		}}
+		loadingText="編集画面を読み込み中..."
+	/>
+{/if}
 
 <style>
 	.dashboard-page {

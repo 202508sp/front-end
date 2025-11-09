@@ -26,7 +26,7 @@
   }: Props = $props();
 
   // Base classes
-  const baseClasses = 'bg:care-background-primary rounded:xl transition-all';
+  const baseClasses = 'bg:care-background-primary r:8px transition-all';
 
   // Variant classes
   const variantClasses = {

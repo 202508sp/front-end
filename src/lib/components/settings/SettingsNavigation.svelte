@@ -1,130 +1,236 @@
 <script lang="ts">
-  import type { SettingGroup } from '$lib/types/settings';
+  import { settingsStore } from '$lib/stores/settings.svelte';
+  import Icon from '@iconify/svelte';
 
   interface Props {
-    groups: SettingGroup[];
-    activeGroup?: string;
-    onGroupSelect: (groupKey: string) => void;
-    class?: string;
-    'data-testid'?: string;
+    selectedCategory: string;
+    onCategoryChange: (category: string) => void;
   }
 
-  let {
-    groups,
-    activeGroup,
-    onGroupSelect,
-    class: className = '',
-    'data-testid': testId
-  }: Props = $props();
+  let { selectedCategory, onCategoryChange }: Props = $props();
 
-  // ソートされたグループ
-  const sortedGroups = $derived(
-    groups.sort((a, b) => (a.order || 0) - (b.order || 0))
-  );
+  const categories = settingsStore.settingCategories;
 
-  function handleGroupClick(groupKey: string) {
-    onGroupSelect(groupKey);
-  }
-
-  function handleKeydown(event: KeyboardEvent, groupKey: string) {
-    if (event.key === 'Enter' || event.key === ' ') {
-      event.preventDefault();
-      handleGroupClick(groupKey);
-    }
+  function handleCategoryClick(categoryKey: string) {
+    onCategoryChange(categoryKey);
   }
 </script>
 
-<nav class="settings-navigation {className}" data-testid={testId}>
-  <div class="settings-nav-header mb:4">
-    <h2 class="text:lg font:semibold text:care-text-primary">設定項目</h2>
+<nav class="settings-navigation">
+  <div class="navigation-header mb:20px">
+    <h2 class="font-size:18px font-weight:600 color:text">設定</h2>
   </div>
 
-  <ul class="settings-nav-list space-y:1" role="tablist">
-    {#each sortedGroups as group (group.key)}
-      {@const isActive = activeGroup === group.key}
-      
-      <li role="none">
+  <ul class="category-list">
+    {#each categories as category (category.key)}
+      <li class="category-item">
         <button
+          class="category-button w:100% p:12px border-radius:8px text-align:left transition:all|0.2s"
+          class:active={selectedCategory === category.key}
+          onclick={() => handleCategoryClick(category.key)}
           type="button"
-          class="settings-nav-item w:full text-left px:3 py:2.5 rounded:md transition-colors duration:200 focus:outline-none focus:ring-2 focus:ring:care-primary-500 focus:ring-offset:1 {isActive 
-            ? 'bg:care-primary-100 text:care-primary-900 border-l:3|solid|care-primary-600' 
-            : 'text:care-text-secondary hover:bg:care-gray-50 hover:text:care-text-primary'
-          }"
-          role="tab"
-          aria-selected={isActive}
-          aria-controls="settings-panel-{group.key}"
-          data-testid="nav-item-{group.key}"
-          onclick={() => handleGroupClick(group.key)}
-          onkeydown={(e) => handleKeydown(e, group.key)}
         >
-          <div class="flex items-center gap:3">
-            {#if group.icon}
-              <div class="w:5 h:5 flex-shrink:0">
-                <svg fill="currentColor" viewBox="0 0 24 24" class="w:full h:full">
-                  <!-- アイコンは実際の実装では適切なアイコンライブラリを使用 -->
-                  {#if group.icon === 'settings'}
-                    <path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/>
-                  {:else if group.icon === 'dashboard'}
-                    <path d="M3,13h8V3H3V13z M3,21h8v-6H3V21z M13,21h8V11h-8V21z M13,3v6h8V3H13z"/>
-                  {:else if group.icon === 'people'}
-                    <path d="M16,4c0-1.11,0.89-2,2-2s2,0.89,2,2s-0.89,2-2,2S16,5.11,16,4z M20,22v-6h2.5l-2.54-7.63A3.01,3.01,0,0,0,17.24,7H16.76 A3.01,3.01,0,0,0,14.04,8.37L11.5,16H14v6H20z M12.5,11.5c0.83,0,1.5-0.67,1.5-1.5s-0.67-1.5-1.5-1.5S11,9.17,11,10 S11.67,11.5,12.5,11.5z M5.5,6C6.33,6,7,5.33,7,4.5S6.33,3,5.5,3S4,3.67,4,4.5S4.67,6,5.5,6z M7.5,22v-7H9V9.5 C9,8.12,7.88,7,6.5,7S4,8.12,4,9.5V15h1.5v7H7.5z"/>
-                  {:else if group.icon === 'notifications'}
-                    <path d="M12,22c1.1,0,2-0.9,2-2h-4C10,21.1,10.9,22,12,22z M18,16v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-0.83-0.67-1.5-1.5-1.5 s-1.5,0.67-1.5,1.5v0.68C7.63,5.36,6,7.92,6,11v5l-2,2v1h16v-1L18,16z"/>
-                  {:else if group.icon === 'security'}
-                    <path d="M12,1L3,5V11C3,16.55 6.84,21.74 12,23C17.16,21.74 21,16.55 21,11V5L12,1M10,17L6,13L7.41,11.59L10,14.17 L16.59,7.58L18,9L10,17Z"/>
-                  {:else}
-                    <circle cx="12" cy="12" r="10"/>
-                  {/if}
-                </svg>
+          <div class="flex align-items:center gap:12px">
+            <Icon 
+              icon={category.icon} 
+              class={`font-size:20px ${selectedCategory === category.key ? 'color:primary' : 'color:secondary'}`}
+            />
+            <div class="category-info flex:1">
+              <div 
+                class={`category-name font-size:14px font-weight:500 ${selectedCategory === category.key ? 'color:primary' : 'color:text'}`}
+              >
+                {category.label}
               </div>
-            {/if}
-            
-            <div class="flex-1 min-w:0">
-              <div class="font:medium text:sm truncate">
-                {group.label}
-              </div>
-              {#if group.description}
-                <div class="text:xs text:care-text-secondary truncate mt:0.5">
-                  {group.description}
+              {#if category.description}
+                <div class="category-description font-size:12px color:secondary mt:2px">
+                  {category.description}
                 </div>
               {/if}
             </div>
+            {#if settingsStore.isDirty}
+              <div class="dirty-indicator w:8px h:8px bg:warning border-radius:50%"></div>
+            {/if}
           </div>
         </button>
       </li>
     {/each}
   </ul>
+
+  <!-- 設定の状態表示 -->
+  <div class="settings-status mt:24px p:16px bg:surface border-radius:8px">
+    <div class="status-item flex align-items:center justify-content:space-between mb:8px">
+      <span class="font-size:12px color:secondary">変更状態</span>
+      <span class="font-size:12px font-weight:500" class:color:warning={settingsStore.isDirty} class:color:success={!settingsStore.isDirty}>
+        {settingsStore.isDirty ? '未保存' : '保存済み'}
+      </span>
+    </div>
+    
+    {#if settingsStore.lastSaved}
+      <div class="status-item flex align-items:center justify-content:space-between">
+        <span class="font-size:12px color:secondary">最終保存</span>
+        <span class="font-size:12px color:text">
+          {settingsStore.lastSaved.toLocaleTimeString()}
+        </span>
+      </div>
+    {/if}
+  </div>
+
+  <!-- クイックアクション -->
+  <div class="quick-actions mt:16px">
+    <button
+      class="quick-action-button w:100% p:10px border:1px|solid|#e2e8f0 border-radius:6px bg:white hover:bg:gray-50 transition:all|0.2s mb:8px"
+      onclick={() => {
+        const data = settingsStore.exportSettings();
+        const blob = new Blob([data], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'settings-export.json';
+        a.click();
+        URL.revokeObjectURL(url);
+      }}
+      type="button"
+    >
+      <div class="flex align-items:center gap:8px">
+        <Icon icon="material-symbols:download" class="font-size:16px color:secondary" />
+        <span class="font-size:13px color:text">設定をエクスポート</span>
+      </div>
+    </button>
+
+    <input
+      type="file"
+      accept=".json"
+      class="hidden"
+      id="import-settings"
+      onchange={(e) => {
+        const file = e.currentTarget.files?.[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            const content = event.target?.result as string;
+            if (content) {
+              const success = settingsStore.importSettings(content);
+              if (success) {
+                alert('設定をインポートしました');
+              } else {
+                alert('設定のインポートに失敗しました');
+              }
+            }
+          };
+          reader.readAsText(file);
+        }
+      }}
+    />
+    
+    <button
+      class="quick-action-button w:100% p:10px border:1px|solid|#e2e8f0 border-radius:6px bg:white hover:bg:gray-50 transition:all|0.2s"
+      onclick={() => document.getElementById('import-settings')?.click()}
+      type="button"
+    >
+      <div class="flex align-items:center gap:8px">
+        <Icon icon="material-symbols:upload" class="font-size:16px color:secondary" />
+        <span class="font-size:13px color:text">設定をインポート</span>
+      </div>
+    </button>
+  </div>
 </nav>
 
 <style>
   .settings-navigation {
-    min-width: 240px;
-    max-width: 280px;
+    width: 280px;
+    height: fit-content;
+    position: sticky;
+    top: 20px;
   }
 
-  .settings-nav-header {
-    padding: 0 0.75rem;
-    border-bottom: 1px solid #f3f4f6;
-    padding-bottom: 1rem;
+  .category-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
   }
 
-  .settings-nav-item {
-    position: relative;
+  .category-item {
+    margin-bottom: 4px;
   }
 
-  .settings-nav-item:hover {
-    transform: translateX(2px);
+  .category-button {
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    transition: all 0.2s ease;
   }
 
-  .settings-nav-item[aria-selected="true"] {
-    font-weight: 600;
+  .category-button:hover {
+    background-color: #f8fafc;
   }
 
-  /* レスポンシブ対応 */
+  .category-button.active {
+    background-color: #eff6ff;
+    border: 1px solid #dbeafe;
+  }
+
+  .category-button:focus {
+    outline: 2px solid #3b82f6;
+    outline-offset: 2px;
+  }
+
+  .dirty-indicator {
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.5;
+    }
+  }
+
+  .quick-action-button:hover {
+    border-color: #cbd5e1;
+  }
+
+  .quick-action-button:focus {
+    outline: 2px solid #3b82f6;
+    outline-offset: 2px;
+  }
+
+  .hidden {
+    display: none;
+  }
+
   @media (max-width: 768px) {
     .settings-navigation {
-      min-width: 100%;
-      max-width: 100%;
+      width: 100%;
+      position: static;
+      margin-bottom: 24px;
+    }
+
+    .category-list {
+      display: flex;
+      overflow-x: auto;
+      gap: 8px;
+      padding-bottom: 8px;
+    }
+
+    .category-item {
+      flex-shrink: 0;
+      margin-bottom: 0;
+    }
+
+    .category-button {
+      white-space: nowrap;
+      min-width: 120px;
+    }
+
+    .category-description {
+      display: none;
+    }
+
+    .settings-status,
+    .quick-actions {
+      display: none;
     }
   }
 </style>

@@ -122,10 +122,10 @@
 
 <div class="flex h:screen bg:care-background-secondary">
   <!-- Main Content Area -->
-  <div class="flex-1 flex flex-col {isSidebarOpen && !isSidebarFullscreen ? 'mr:96' : ''}">
+  <div class="flex-1 flex flex:column {isSidebarOpen && !isSidebarFullscreen ? 'mr:96' : ''}">
     <!-- Header -->
     <div class="flex-shrink:0 bg:white border-b:1|solid|care-gray-200 px:6 py:4">
-      <div class="flex items-center justify-between">
+      <div class="flex ai:center jc:space-betwrrn">
         <div>
           <h1 class="text:2xl font:bold text:care-text-primary">職員管理</h1>
           <p class="text:care-text-secondary mt:1">
@@ -133,7 +133,7 @@
           </p>
         </div>
         
-        <div class="flex items-center gap:3">
+        <div class="flex ai:center gap:3">
           <!-- Pending Approvals Badge -->
           {#if pendingApprovals.length > 0}
             <Button
@@ -147,7 +147,7 @@
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 承認待ち
-                <span class="absolute -top:2 -right:2 bg:care-accent-error-500 text:white text:xs rounded:full w:5 h:5 flex items-center justify-center">
+                <span class="absolute -top:2 -right:2 bg:care-accent-error-500 text:white text:xs r:9999px w:5 h:5 flex ai:center jc:center">
                   {pendingApprovals.length}
                 </span>
               {/snippet}
@@ -155,7 +155,7 @@
           {/if}
           
           <!-- View Toggle -->
-          <div class="flex border:1|solid|care-gray-300 rounded:lg overflow:hidden">
+          <div class="flex border:1|solid|care-gray-300 r:24px overflow:hidden">
             <button
               type="button"
               class="px:4 py:2 text:sm font:medium {activeView === 'list' ? 'bg:care-primary-500 text:white' : 'bg:white text:care-text-primary hover:bg:care-gray-50'}"
@@ -244,8 +244,8 @@
       {:else}
         <div class="space-y:4 max-h:96 overflow-y:auto">
           {#each pendingApprovals as staff}
-            <div class="border:1|solid|care-gray-200 rounded:lg p:4">
-              <div class="flex items-start justify-between">
+            <div class="border:1|solid|care-gray-200 r:24px p:4">
+              <div class="flex items-start jc:space-betwrrn">
                 <div class="flex-1">
                   <h4 class="font:medium text:care-text-primary">{staff.name}</h4>
                   <p class="text:sm text:care-text-secondary">{staff.nameKana} - {staff.department}</p>

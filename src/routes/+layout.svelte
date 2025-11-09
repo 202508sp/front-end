@@ -5,6 +5,12 @@
 	import { depth } from '$lib/layout/modalStack';
 	import { defaultColor } from '$lib/utils/color';
 	import { fly } from 'svelte/transition';
+	import { authStore } from '$lib/stores/auth.svelte';
+	import UserMenu from '$lib/components/auth/UserMenu.svelte';
+	import PermissionGate from '$lib/components/auth/PermissionGate.svelte';
+	import { routeManager } from '$lib/utils/routes';
+	import { componentLoader } from '$lib/utils/componentLoader';
+	import { lazyLoadOnIdle } from '$lib/utils/intersectionObserver';
 
 	type Menu = {
 		name: string;
@@ -15,10 +21,11 @@
 	const menus: Menu[] = [
 		{ name: 'ホーム', icon: 'material-symbols:home-rounded', href: '/' },
 		{ name: '利用者', icon: 'material-symbols:person', href: 'user' },
-		{ name: '職員', icon: 'material-symbols:person-apron', href: 'staf' },
-		{ name: 'レポート', icon: 'material-symbols:docs-rounded', href: 'report' },
+		{ name: '職員', icon: 'material-symbols:person-apron', href: 'staff' },
+		{ name: '統計', icon: 'material-symbols:analytics', href: 'statistics' },
+		{ name: 'レポート', icon: 'material-symbols:docs-rounded', href: 'management' },
 		{ name: '設定', icon: 'material-symbols:settings', href: 'settings' },
-		{ name: 'ヘルプ', icon: 'material-symbols:question-mark-rounded', href: 'help' }
+		{ name: '家族ポータル', icon: 'material-symbols:family-restroom', href: 'family-portal' }
 	];
 
 	let { children } = $props();
@@ -42,6 +49,32 @@
 		updateTime();
 		const interval = setInterval(updateTime, 1000);
 		return () => clearInterval(interval);
+	});
+
+	// パフォーマンス最適化: 重要なルートとコンポーネントのプリロード
+	$effect(() => {
+		// 認証状態が変更されたときにプリロードを実行
+		if (authStore.isAuthenticated) {
+			const user = authStore.user;
+			if (user) {
+				// ユーザーの権限に基づいてルートをプリロード
+				const permissions = user.staffInfo?.permissions || [];
+				const roles = user.staffInfo?.role ? [user.staffInfo.role] : [];
+				routeManager.preloadUserRoutes(permissions, roles);
+				
+				// アイドル時間にコンポーネントをプリロード
+				lazyLoadOnIdle(() => {
+					componentLoader.preloadByPriority('high');
+				}, 1000);
+				
+				lazyLoadOnIdle(() => {
+					componentLoader.preloadByPriority('medium');
+				}, 3000);
+			}
+		} else {
+			// 未認証時は重要なルートのみプリロード
+			routeManager.preloadCriticalRoutes();
+		}
 	});
 </script>
 
@@ -67,14 +100,16 @@
 				</div>
 			</div>
 			<div class="h:100% justify-content:end align-items:end gap:16px pt:24px pr:20px flex">
-				<button
-					class="px:10px py:4px bg:var(--color-secondary) text:var(--color-text) r:8px cursor:pointer"
-					onclick={() => {
-						alert('ログアウトしました');
-					}}
-				>
-					ログアウト
-				</button>
+				{#if authStore.isAuthenticated}
+					<UserMenu />
+				{:else}
+					<a
+						href="/login"
+						class="px:16px py:8px bg:var(--color-secondary) text:var(--color-text) r:8px cursor:pointer text-decoration:none"
+					>
+						ログイン
+					</a>
+				{/if}
 				<div class="w:160px h:100% b:2px|solid|var(--color-accent-pink) flex"></div>
 			</div>
 		</div>
@@ -106,23 +141,105 @@
 							: '60px'}; transition: width .2s ease-in-out; overflow: hidden;"
 					>
 						{#each menus as menu}
-							<button
-								class="w:100% h:60px rel grid-template-cols:60px|1fr justify-content:start align-items:center bg:var(--color-secondary) fg:var(--color-text) r:60px cursor:pointer grid"
-								onclick={() => (window.location.href = menu.href)}
-							>
-								<div class="w:60px h:60px justify-content:center align-items:center flex">
-									<Icon icon={menu.icon} class="w:30px h:30px" />
-								</div>
-								<div class="abs top:50% translateY(calc(-50%-2px)) left:60px">
-									{#if menuOpen}
-										<span
-											transition:fly={{ duration: 200, x: -20 }}
-											class="text:16pt font:bold w:110px justify-content:center align-items:center flex"
-											>{menu.name}</span
-										>
-									{/if}
-								</div>
-							</button>
+							{#if menu.href === 'family-portal'}
+								<PermissionGate allowFamily={true} requireAuth={true}>
+									<button
+										class="w:100% h:60px rel grid-template-cols:60px|1fr justify-content:start align-items:center bg:var(--color-secondary) fg:var(--color-text) r:60px cursor:pointer grid"
+										onclick={() => (window.location.href = menu.href)}
+									>
+										<div class="w:60px h:60px justify-content:center align-items:center flex">
+											<Icon icon={menu.icon} class="w:30px h:30px" />
+										</div>
+										<div class="abs top:50% translateY(calc(-50%-2px)) left:60px">
+											{#if menuOpen}
+												<span
+													transition:fly={{ duration: 200, x: -20 }}
+													class="text:16pt font:bold w:110px justify-content:center align-items:center flex"
+													>{menu.name}</span
+												>
+											{/if}
+										</div>
+									</button>
+								</PermissionGate>
+							{:else if menu.href === 'settings'}
+								<PermissionGate role="admin">
+									<button
+										class="w:100% h:60px rel grid-template-cols:60px|1fr justify-content:start align-items:center bg:var(--color-secondary) fg:var(--color-text) r:60px cursor:pointer grid"
+										onclick={() => (window.location.href = menu.href)}
+									>
+										<div class="w:60px h:60px justify-content:center align-items:center flex">
+											<Icon icon={menu.icon} class="w:30px h:30px" />
+										</div>
+										<div class="abs top:50% translateY(calc(-50%-2px)) left:60px">
+											{#if menuOpen}
+												<span
+													transition:fly={{ duration: 200, x: -20 }}
+													class="text:16pt font:bold w:110px justify-content:center align-items:center flex"
+													>{menu.name}</span
+												>
+											{/if}
+										</div>
+									</button>
+								</PermissionGate>
+							{:else if menu.href === 'user'}
+								<PermissionGate permission="user.read">
+									<button
+										class="w:100% h:60px rel grid-template-cols:60px|1fr justify-content:start align-items:center bg:var(--color-secondary) fg:var(--color-text) r:60px cursor:pointer grid"
+										onclick={() => (window.location.href = menu.href)}
+									>
+										<div class="w:60px h:60px justify-content:center align-items:center flex">
+											<Icon icon={menu.icon} class="w:30px h:30px" />
+										</div>
+										<div class="abs top:50% translateY(calc(-50%-2px)) left:60px">
+											{#if menuOpen}
+												<span
+													transition:fly={{ duration: 200, x: -20 }}
+													class="text:16pt font:bold w:110px justify-content:center align-items:center flex"
+													>{menu.name}</span
+												>
+											{/if}
+										</div>
+									</button>
+								</PermissionGate>
+							{:else if menu.href === 'staff'}
+								<PermissionGate permission="staff.read">
+									<button
+										class="w:100% h:60px rel grid-template-cols:60px|1fr justify-content:start align-items:center bg:var(--color-secondary) fg:var(--color-text) r:60px cursor:pointer grid"
+										onclick={() => (window.location.href = menu.href)}
+									>
+										<div class="w:60px h:60px justify-content:center align-items:center flex">
+											<Icon icon={menu.icon} class="w:30px h:30px" />
+										</div>
+										<div class="abs top:50% translateY(calc(-50%-2px)) left:60px">
+											{#if menuOpen}
+												<span
+													transition:fly={{ duration: 200, x: -20 }}
+													class="text:16pt font:bold w:110px justify-content:center align-items:center flex"
+													>{menu.name}</span
+												>
+											{/if}
+										</div>
+									</button>
+								</PermissionGate>
+							{:else}
+								<button
+									class="w:100% h:60px rel grid-template-cols:60px|1fr justify-content:start align-items:center bg:var(--color-secondary) fg:var(--color-text) r:60px cursor:pointer grid"
+									onclick={() => (window.location.href = menu.href)}
+								>
+									<div class="w:60px h:60px justify-content:center align-items:center flex">
+										<Icon icon={menu.icon} class="w:30px h:30px" />
+									</div>
+									<div class="abs top:50% translateY(calc(-50%-2px)) left:60px">
+										{#if menuOpen}
+											<span
+												transition:fly={{ duration: 200, x: -20 }}
+												class="text:16pt font:bold w:110px justify-content:center align-items:center flex"
+												>{menu.name}</span
+											>
+										{/if}
+									</div>
+								</button>
+							{/if}
 						{/each}
 					</div>
 				</div>

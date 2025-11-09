@@ -55,7 +55,7 @@
 						<button
 							type="button"
 							class="
-								w:100% text:left p:12px|16px rounded:8px
+								w:100% text:left p:12px|16px r:8px
 								flex items:center gap:12px
 								transition:all|200ms|ease-in-out
 								{selectedId === item.id 
@@ -83,7 +83,7 @@
 							{/if}
 
 							<div class="flex:1 min-w:0">
-								<div class="font:500 text:14px truncate">
+								<div class=" text:14px truncate">
 									{item.title}
 								</div>
 								{#if item.subtitle}
@@ -95,8 +95,8 @@
 
 							{#if item.badge}
 								<div class="
-									flex-shrink:0 px:6px py:2px rounded:full
-									bg:red-100 text:red-700 text:11px font:600
+									flex-shrink:0 px:6px py:2px r:9999px
+									bg:red-100 text:red-700 text:11px 
 									min-w:20px text:center
 								">
 									{item.badge}
@@ -115,7 +115,7 @@
 
 						<!-- Expanded content for level 2 -->
 						{#if selectedId === item.id && item.children && level === 2}
-							<div class="mt:8px ml:32px p:16px bg:gray-50 rounded:8px">
+							<div class="mt:8px ml:32px p:16px bg:gray-50 r:8px">
 								{@render item.children()}
 							</div>
 						{/if}

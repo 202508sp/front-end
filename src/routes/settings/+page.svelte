@@ -2,361 +2,177 @@
   import { onMount } from 'svelte';
   import { page } from '$app/stores';
   import { goto } from '$app/navigation';
+  import SettingsLayout from '$lib/components/settings/SettingsLayout.svelte';
   import { settingsStore } from '$lib/stores/settings.svelte';
-  import { 
-    SettingsForm, 
-    SettingsNavigation, 
-    SettingsResetDialog, 
-    UnsavedChangesDialog 
-  } from '$lib/components/settings';
-  import Button from '$lib/components/ui/Button.svelte';
-  import type { SettingsPageState } from '$lib/types/settings';
 
-  // ページ状態
-  let pageState = $state<SettingsPageState>({
-    activeGroup: undefined,
-    showResetDialog: false,
-    showUnsavedChangesDialog: false
-  });
+  // URLパラメータから初期カテゴリを取得
+  let initialCategory = $state('general');
 
-  // 保存状態
-  let isSaving = $state(false);
-  let saveError = $state<string | null>(null);
-  let saveSuccess = $state(false);
-
-  // 派生状態
-  const groups = $derived(settingsStore.groups);
-  const currentValues = $derived(settingsStore.currentValues);
-  const errors = $derived(settingsStore.errors);
-  const isDirty = $derived(settingsStore.isDirty);
-  const isLoading = $derived(settingsStore.isLoading);
-
-  // アクティブグループの設定
-  $effect(() => {
-    if (groups.length > 0 && !pageState.activeGroup) {
-      // URLパラメータから取得、なければ最初のグループ
-      const urlGroup = $page.url.searchParams.get('group');
-      const validGroup = groups.find(g => g.key === urlGroup);
-      pageState.activeGroup = validGroup?.key || groups[0].key;
-    }
-  });
-
-  // アクティブグループのフィルタリング
-  const activeGroups = $derived(
-    pageState.activeGroup 
-      ? groups.filter(g => g.key === pageState.activeGroup)
-      : groups
-  );
-
-  // 初期化
-  onMount(async () => {
-    try {
-      await settingsStore.initialize();
-    } catch (error) {
-      console.error('設定の初期化に失敗しました:', error);
-    }
-  });
-
-  // グループ選択処理
-  function handleGroupSelect(groupKey: string) {
-    if (isDirty) {
-      // 未保存の変更がある場合は確認ダイアログを表示
-      pageState.showUnsavedChangesDialog = true;
-      return;
-    }
-    
-    selectGroup(groupKey);
-  }
-
-  function selectGroup(groupKey: string) {
-    pageState.activeGroup = groupKey;
-    
-    // URLを更新
-    const url = new URL($page.url);
-    url.searchParams.set('group', groupKey);
-    goto(url.toString(), { replaceState: true });
-  }
-
-  // フィールド変更処理
-  function handleFieldChange(key: string, value: any) {
-    settingsStore.updateField(key, value);
-    
-    // 成功メッセージをクリア
-    if (saveSuccess) {
-      saveSuccess = false;
-    }
-  }
-
-  // フィールドバリデーション
-  function handleFieldValidate(key: string, value: any): string | null {
-    const field = settingsStore.getField(key);
-    if (!field) return null;
-    
-    // バリデーションロジックはストア内で処理
-    return null;
-  }
-
-  // 設定保存処理
-  async function handleSave() {
-    if (!isDirty) return;
-
-    isSaving = true;
-    saveError = null;
-    saveSuccess = false;
-
-    try {
-      await settingsStore.save();
-      saveSuccess = true;
-      
-      // 成功メッセージを3秒後に自動で消す
-      setTimeout(() => {
-        saveSuccess = false;
-      }, 3000);
-    } catch (error) {
-      console.error('設定の保存に失敗しました:', error);
-      saveError = error instanceof Error ? error.message : '設定の保存に失敗しました';
-    } finally {
-      isSaving = false;
-    }
-  }
-
-  // 変更破棄処理
-  function handleDiscard() {
-    settingsStore.discardChanges();
-    pageState.showUnsavedChangesDialog = false;
-  }
-
-  // リセット処理
-  function handleReset() {
-    pageState.showResetDialog = true;
-  }
-
-  async function handleConfirmReset() {
-    try {
-      await settingsStore.reset();
-      pageState.showResetDialog = false;
-      saveSuccess = true;
-      
-      setTimeout(() => {
-        saveSuccess = false;
-      }, 3000);
-    } catch (error) {
-      console.error('設定のリセットに失敗しました:', error);
-      saveError = error instanceof Error ? error.message : '設定のリセットに失敗しました';
-    }
-  }
-
-  // 未保存変更ダイアログの処理
-  function handleSaveAndContinue() {
-    handleSave().then(() => {
-      pageState.showUnsavedChangesDialog = false;
-      // 元々選択しようとしていたグループに移動
-      // この実装では簡略化
-    });
-  }
-
-  function handleDiscardAndContinue() {
-    handleDiscard();
-    // 元々選択しようとしていたグループに移動
-    // この実装では簡略化
-  }
-
-  // キーボードショートカット
-  function handleKeydown(event: KeyboardEvent) {
-    if (event.ctrlKey || event.metaKey) {
-      switch (event.key) {
-        case 's':
-          event.preventDefault();
-          if (isDirty && !isSaving) {
-            handleSave();
-          }
-          break;
-        case 'z':
-          event.preventDefault();
-          if (isDirty) {
-            handleDiscard();
-          }
-          break;
+  onMount(() => {
+    // URLクエリパラメータからカテゴリを取得
+    const categoryParam = $page.url.searchParams.get('category');
+    if (categoryParam) {
+      const validCategories = settingsStore.settingCategories.map(cat => cat.key);
+      if (validCategories.includes(categoryParam)) {
+        initialCategory = categoryParam;
       }
     }
-  }
 
-  // ページ離脱時の確認
-  function handleBeforeUnload(event: BeforeUnloadEvent) {
-    if (isDirty) {
-      event.preventDefault();
-      event.returnValue = '未保存の変更があります。このページを離れますか？';
+    // 設定を初期化（必要に応じて）
+    if (!settingsStore.lastSaved) {
+      // 初回アクセス時の処理
+      console.log('設定ページに初回アクセスしました');
     }
+  });
+
+  // カテゴリ変更時にURLを更新
+  function updateURL(category: string) {
+    const url = new URL(window.location.href);
+    url.searchParams.set('category', category);
+    goto(url.toString(), { replaceState: true, noScroll: true });
   }
 
-  // ページ離脱時の確認を設定
+  // ページタイトルを設定
   $effect(() => {
-    if (typeof window !== 'undefined') {
-      window.addEventListener('beforeunload', handleBeforeUnload);
-      return () => {
-        window.removeEventListener('beforeunload', handleBeforeUnload);
-      };
-    }
+    document.title = '設定 - 介護施設ダッシュボード';
   });
 </script>
 
-<svelte:window onkeydown={handleKeydown} />
+<svelte:head>
+  <title>設定 - 介護施設ダッシュボード</title>
+  <meta name="description" content="システムの設定を管理します。テーマ、通知、アクセシビリティなどの設定を変更できます。" />
+</svelte:head>
 
-<div class="settings-page min-h:screen bg:care-gray-50" data-testid="settings-page">
-  <!-- ページヘッダー -->
-  <div class="bg:white border-b:1|solid|care-gray-200">
-    <div class="max-w:7xl mx:auto px:4 sm:px:6 lg:px:8">
-      <div class="flex items-center justify-between h:16">
-        <div>
-          <h1 class="text:2xl font:bold text:care-text-primary">設定</h1>
-          <p class="text:sm text:care-text-secondary mt:1">
-            システムの動作を設定・カスタマイズできます
-          </p>
-        </div>
-
-        <!-- ヘッダーアクション -->
-        <div class="flex items-center gap:3">
-          <!-- 保存状態表示 -->
-          {#if saveSuccess}
-            <div class="flex items-center gap:2 text:care-accent-success-600 text:sm">
-              <svg class="w:4 h:4" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
-              </svg>
-              設定を保存しました
-            </div>
-          {:else if saveError}
-            <div class="flex items-center gap:2 text:care-accent-error-600 text:sm">
-              <svg class="w:4 h:4" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-              </svg>
-              {saveError}
-            </div>
-          {:else if isDirty}
-            <div class="flex items-center gap:2 text:care-accent-warning-600 text:sm">
-              <svg class="w:4 h:4" fill="currentColor" viewBox="0 0 24 24">
-                <circle cx="12" cy="12" r="10"/>
-              </svg>
-              未保存の変更があります
-            </div>
-          {/if}
-
-          <!-- アクションボタン -->
-          <div class="flex gap:2">
-            <Button
-              variant="ghost"
-              size="sm"
-              disabled={!isDirty || isSaving}
-              onclick={handleDiscard}
-              data-testid="discard-button"
-            >
-              変更を破棄
-            </Button>
-            
-            <Button
-              variant="outline"
-              size="sm"
-              onclick={handleReset}
-              data-testid="reset-button"
-            >
-              リセット
-            </Button>
-            
-            <Button
-              variant="primary"
-              size="sm"
-              disabled={!isDirty}
-              loading={isSaving}
-              onclick={handleSave}
-              data-testid="save-button"
-            >
-              {#if isSaving}
-                保存中...
-              {:else}
-                変更を保存
-              {/if}
-            </Button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- メインコンテンツ -->
-  <div class="max-w:7xl mx:auto px:4 sm:px:6 lg:px:8 py:8">
-    <div class="flex gap:8">
-      <!-- サイドナビゲーション -->
-      <div class="w:80 flex-shrink:0">
-        <div class="sticky top:8">
-          <SettingsNavigation
-            {groups}
-            activeGroup={pageState.activeGroup}
-            onGroupSelect={handleGroupSelect}
-            data-testid="settings-navigation"
-          />
-        </div>
-      </div>
-
-      <!-- 設定フォーム -->
-      <div class="flex-1 min-w:0">
-        {#if isLoading}
-          <div class="flex items-center justify-center h:64">
-            <div class="flex items-center gap:3 text:care-text-secondary">
-              <svg class="animate:spin w:6 h:6" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity:25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity:75" fill="currentColor" d="m4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
-              設定を読み込み中...
-            </div>
-          </div>
-        {:else if groups.length === 0}
-          <div class="text-center py:16">
-            <div class="text:care-text-secondary">
-              設定項目が見つかりません
-            </div>
-          </div>
-        {:else}
-          <SettingsForm
-            groups={activeGroups}
-            values={currentValues}
-            {errors}
-            disabled={isSaving}
-            onFieldChange={handleFieldChange}
-            onValidate={handleFieldValidate}
-            data-testid="settings-form"
-          />
-        {/if}
-      </div>
-    </div>
-  </div>
-
-  <!-- キーボードショートカットヘルプ -->
-  <div class="fixed bottom:4 right:4 bg:care-gray-800 text:white text:xs px:3 py:2 rounded:md opacity:75">
-    <div class="space-y:1">
-      <div>Ctrl+S: 保存</div>
-      <div>Ctrl+Z: 変更を破棄</div>
-    </div>
-  </div>
-</div>
-
-<!-- ダイアログ -->
-<SettingsResetDialog
-  isOpen={pageState.showResetDialog}
-  isLoading={isSaving}
-  onConfirm={handleConfirmReset}
-  onCancel={() => pageState.showResetDialog = false}
-  data-testid="reset-dialog"
-/>
-
-<UnsavedChangesDialog
-  isOpen={pageState.showUnsavedChangesDialog}
-  onSave={handleSaveAndContinue}
-  onDiscard={handleDiscardAndContinue}
-  onCancel={() => pageState.showUnsavedChangesDialog = false}
-  data-testid="unsaved-changes-dialog"
-/>
+<main class="settings-page">
+  <SettingsLayout {initialCategory} />
+</main>
 
 <style>
   .settings-page {
     min-height: 100vh;
+    background-color: #f8fafc;
+  }
+
+  :global(body) {
+    background-color: #f8fafc;
+  }
+
+  /* アクセシビリティ対応のCSS */
+  :global(.large-text) {
+    font-size: 1.125em;
+  }
+
+  :global(.large-text h1) {
+    font-size: 2.25rem;
+  }
+
+  :global(.large-text h2) {
+    font-size: 1.875rem;
+  }
+
+  :global(.large-text h3) {
+    font-size: 1.5rem;
+  }
+
+  :global(.large-text p, .large-text span, .large-text div) {
+    font-size: 1.125rem;
+    line-height: 1.6;
+  }
+
+  :global(.large-text button) {
+    font-size: 1.125rem;
+    padding: 12px 20px;
+  }
+
+  :global(.high-contrast) {
+    --color-primary: #000000;
+    --color-secondary: #333333;
+    --color-text: #000000;
+    --color-background: #ffffff;
+    --color-surface: #f5f5f5;
+  }
+
+  :global(.high-contrast) button {
+    border: 2px solid #000000;
+  }
+
+  :global(.high-contrast) input,
+  :global(.high-contrast) select,
+  :global(.high-contrast) textarea {
+    border: 2px solid #000000;
+    background-color: #ffffff;
+    color: #000000;
+  }
+
+  :global(.reduced-motion) * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  :global(.reduced-motion) *:hover,
+  :global(.reduced-motion) *:focus {
+    transition: none !important;
+  }
+
+  /* レスポンシブ対応 */
+  @media (max-width: 768px) {
+    .settings-page {
+      padding: 0;
+    }
+  }
+
+  /* プリント対応 */
+  @media print {
+    .settings-page {
+      background-color: white;
+    }
+
+    :global(.settings-navigation),
+    :global(.header-actions),
+    :global(.quick-actions) {
+      display: none;
+    }
+  }
+
+  /* ダークモード対応（将来的な拡張用） */
+  @media (prefers-color-scheme: dark) {
+    .settings-page {
+      background-color: #1e293b;
+    }
+
+    :global(.dark-mode) {
+      --color-primary: #3b82f6;
+      --color-secondary: #64748b;
+      --color-text: #f1f5f9;
+      --color-background: #0f172a;
+      --color-surface: #1e293b;
+    }
+  }
+
+  /* フォーカス表示の改善 */
+  :global(*:focus) {
+    outline: 2px solid #3b82f6;
+    outline-offset: 2px;
+  }
+
+  :global(button:focus),
+  :global(input:focus),
+  :global(select:focus),
+  :global(textarea:focus) {
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  }
+
+  /* スクリーンリーダー用の隠しテキスト */
+  :global(.sr-only) {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
   }
 </style>

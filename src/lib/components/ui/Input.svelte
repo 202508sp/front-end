@@ -47,7 +47,7 @@
   }: Props = $props();
 
   // Base classes
-  const baseClasses = 'block w:full rounded:lg border transition-colors focus:outline-none focus:ring-2 focus:ring-offset:1';
+  const baseClasses = 'block w:full r:24px border transition-colors focus:outline-none focus:ring-2 focus:ring-offset:1';
 
   // Size classes
   const sizeClasses = {

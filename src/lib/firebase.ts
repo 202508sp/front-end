@@ -4,6 +4,7 @@
 
 import { initializeApp, type FirebaseApp } from 'firebase/app';
 import { getDatabase, type Database } from 'firebase/database';
+import { getFirestore, type Firestore } from 'firebase/firestore';
 import { getStorage, type FirebaseStorage } from 'firebase/storage';
 import { getAuth, type Auth } from 'firebase/auth';
 
@@ -21,12 +22,14 @@ const firebaseConfig = {
 // Firebase アプリケーションを初期化
 let app: FirebaseApp;
 let database: Database;
+let firestore: Firestore;
 let storage: FirebaseStorage;
 let auth: Auth;
 
 try {
   app = initializeApp(firebaseConfig);
   database = getDatabase(app);
+  firestore = getFirestore(app);
   storage = getStorage(app);
   auth = getAuth(app);
 } catch (error) {
@@ -46,7 +49,7 @@ try {
   }
 }
 
-export { app, database, storage, auth };
+export { app, database, firestore, storage, auth };
 
 /**
  * Firebase接続状態を確認

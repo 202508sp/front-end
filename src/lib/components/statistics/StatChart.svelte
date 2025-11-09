@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount, onDestroy } from 'svelte';
+  import { onMount, onDestroy, untrack } from 'svelte';
   import {
     Chart,
     CategoryScale,
@@ -8,6 +8,10 @@
     LineElement,
     BarElement,
     ArcElement,
+    BarController,
+    LineController,
+    DoughnutController,
+    PieController,
     Title,
     Tooltip,
     Legend,
@@ -24,6 +28,10 @@
     LineElement,
     BarElement,
     ArcElement,
+    BarController,
+    LineController,
+    DoughnutController,
+    PieController,
     Title,
     Tooltip,
     Legend,
@@ -100,13 +108,6 @@
     });
   };
 
-  const updateChart = () => {
-    if (!chart) return;
-
-    chart.data = data;
-    chart.update();
-  };
-
   onMount(() => {
     createChart();
   });
@@ -117,17 +118,29 @@
     }
   });
 
-  // Reactive updates
+  // Reactive updates - recreate chart when type or options change
   $effect(() => {
-    if (chart && data) {
-      updateChart();
+    // Track dependencies
+    const currentType = type;
+    const currentOptions = options;
+    
+    if (canvas) {
+      untrack(() => {
+        createChart();
+      });
     }
   });
 
+  // Update chart data without recreating
   $effect(() => {
-    if (type || options) {
-      createChart();
-    }
+    const currentData = data;
+    
+    untrack(() => {
+      if (chart) {
+        chart.data = currentData;
+        chart.update('none');
+      }
+    });
   });
 </script>
 

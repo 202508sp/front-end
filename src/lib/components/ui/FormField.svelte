@@ -62,7 +62,7 @@
   {#if error}
     <p 
       id={errorId}
-      class="text:xs text:care-accent-error-600 flex items-center gap:1"
+      class="text:xs text:care-accent-error-600 flex ai:center gap:1"
       role="alert"
     >
       <svg class="w:3 h:3 flex-shrink:0" fill="currentColor" viewBox="0 0 20 20">

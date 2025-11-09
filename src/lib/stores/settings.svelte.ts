@@ -1,532 +1,512 @@
 /**
  * 設定管理ストア
- * Svelte 5 Rune を使用した設定状態管理
+ * システム全体の設定を管理し、リアルタイムで変更を反映
  */
 
-import type { 
-  SettingsState, 
-  SettingGroup, 
-  SettingField, 
-  FacilitySettings,
-  SettingsConfig 
-} from '$lib/types/settings';
+import type { AppSettings, Theme } from '$lib/types/common';
+import { validateSettingValue } from '$lib/utils/validation';
 
-class SettingsStore {
-  // 基本状態
-  private _state = $state<SettingsState>({
-    config: {
-      groups: [],
-      version: '1.0.0',
-      lastUpdated: new Date()
-    },
-    currentValues: {},
-    originalValues: {},
-    isDirty: false,
-    isLoading: false,
-    isSaving: false,
-    errors: {}
-  });
-
-  // 派生状態
-  get config() { return this._state.config; }
-  get currentValues() { return this._state.currentValues; }
-  get originalValues() { return this._state.originalValues; }
-  get isDirty() { return this._state.isDirty; }
-  get isLoading() { return this._state.isLoading; }
-  get isSaving() { return this._state.isSaving; }
-  get errors() { return this._state.errors; }
-  get lastSaved() { return this._state.lastSaved; }
-
-  // 設定グループの取得
-  get groups() {
-    return this._state.config.groups.sort((a, b) => (a.order || 0) - (b.order || 0));
-  }
-
-  // 特定グループの取得
-  getGroup(key: string): SettingGroup | undefined {
-    return this._state.config.groups.find(group => group.key === key);
-  }
-
-  // 特定フィールドの取得
-  getField(key: string): SettingField | undefined {
-    for (const group of this._state.config.groups) {
-      const field = group.fields.find(f => f.key === key);
-      if (field) return field;
+// デフォルトテーマ
+const DEFAULT_THEME: Theme = {
+  name: 'default',
+  colors: {
+    primary: '#2563eb',
+    secondary: '#64748b',
+    tertiary: '#f1f5f9',
+    text: '#1e293b',
+    background: '#ffffff',
+    surface: '#f8fafc',
+    accent: {
+      success: '#10b981',
+      warning: '#f59e0b',
+      error: '#ef4444',
+      info: '#3b82f6'
     }
-    return undefined;
+  },
+  fonts: {
+    primary: 'Noto Sans JP Variable, sans-serif',
+    secondary: 'Inter, sans-serif'
+  },
+  spacing: {
+    xs: '0.25rem',
+    sm: '0.5rem',
+    md: '1rem',
+    lg: '1.5rem',
+    xl: '2rem',
+    '2xl': '3rem'
+  },
+  borderRadius: {
+    sm: '0.25rem',
+    md: '0.375rem',
+    lg: '0.5rem',
+    xl: '0.75rem'
+  }
+};
+
+// デフォルト設定
+const DEFAULT_SETTINGS: AppSettings = {
+  theme: DEFAULT_THEME,
+  language: 'ja',
+  timezone: 'Asia/Tokyo',
+  dateFormat: 'YYYY/MM/DD',
+  timeFormat: '24h',
+  notifications: {
+    email: true,
+    push: true,
+    inApp: true
+  },
+  accessibility: {
+    highContrast: false,
+    largeText: false,
+    reducedMotion: false
+  }
+};
+
+// 設定項目の定義
+export interface SettingItem {
+  key: string;
+  label: string;
+  description?: string;
+  type: 'text' | 'select' | 'toggle' | 'number' | 'color';
+  category: string;
+  options?: { value: string; label: string }[];
+  validation?: (value: any) => string | null;
+  defaultValue: any;
+  requiresRestart?: boolean;
+}
+
+// 設定カテゴリ
+export interface SettingCategory {
+  key: string;
+  label: string;
+  description?: string;
+  icon: string;
+}
+
+// 設定項目の定義
+const SETTING_ITEMS: SettingItem[] = [
+  // 一般設定
+  {
+    key: 'language',
+    label: '言語',
+    description: 'システムの表示言語を選択してください',
+    type: 'select',
+    category: 'general',
+    options: [
+      { value: 'ja', label: '日本語' },
+      { value: 'en', label: 'English' }
+    ],
+    defaultValue: 'ja'
+  },
+  {
+    key: 'timezone',
+    label: 'タイムゾーン',
+    description: '日時表示に使用するタイムゾーンを選択してください',
+    type: 'select',
+    category: 'general',
+    options: [
+      { value: 'Asia/Tokyo', label: '日本標準時 (JST)' },
+      { value: 'UTC', label: '協定世界時 (UTC)' },
+      { value: 'America/New_York', label: '東部標準時 (EST)' }
+    ],
+    defaultValue: 'Asia/Tokyo'
+  },
+  {
+    key: 'dateFormat',
+    label: '日付形式',
+    description: '日付の表示形式を選択してください',
+    type: 'select',
+    category: 'general',
+    options: [
+      { value: 'YYYY/MM/DD', label: '2024/01/15' },
+      { value: 'MM/DD/YYYY', label: '01/15/2024' },
+      { value: 'DD/MM/YYYY', label: '15/01/2024' },
+      { value: 'YYYY-MM-DD', label: '2024-01-15' }
+    ],
+    defaultValue: 'YYYY/MM/DD'
+  },
+  {
+    key: 'timeFormat',
+    label: '時刻形式',
+    description: '時刻の表示形式を選択してください',
+    type: 'select',
+    category: 'general',
+    options: [
+      { value: '24h', label: '24時間形式 (13:30)' },
+      { value: '12h', label: '12時間形式 (1:30 PM)' }
+    ],
+    defaultValue: '24h'
+  },
+
+  // 通知設定
+  {
+    key: 'notifications.email',
+    label: 'メール通知',
+    description: '重要な更新をメールで受信します',
+    type: 'toggle',
+    category: 'notifications',
+    defaultValue: true
+  },
+  {
+    key: 'notifications.push',
+    label: 'プッシュ通知',
+    description: 'ブラウザのプッシュ通知を受信します',
+    type: 'toggle',
+    category: 'notifications',
+    defaultValue: true
+  },
+  {
+    key: 'notifications.inApp',
+    label: 'アプリ内通知',
+    description: 'アプリケーション内で通知を表示します',
+    type: 'toggle',
+    category: 'notifications',
+    defaultValue: true
+  },
+
+  // アクセシビリティ設定
+  {
+    key: 'accessibility.highContrast',
+    label: 'ハイコントラスト',
+    description: '視認性を向上させるため、コントラストを高くします',
+    type: 'toggle',
+    category: 'accessibility',
+    defaultValue: false
+  },
+  {
+    key: 'accessibility.largeText',
+    label: '大きな文字',
+    description: 'テキストサイズを大きくして読みやすくします',
+    type: 'toggle',
+    category: 'accessibility',
+    defaultValue: false
+  },
+  {
+    key: 'accessibility.reducedMotion',
+    label: 'アニメーション軽減',
+    description: 'アニメーションや動きを最小限に抑えます',
+    type: 'toggle',
+    category: 'accessibility',
+    defaultValue: false
+  },
+
+  // テーマ設定
+  {
+    key: 'theme.colors.primary',
+    label: 'プライマリカラー',
+    description: 'メインの色を設定します',
+    type: 'color',
+    category: 'theme',
+    defaultValue: '#2563eb'
+  },
+  {
+    key: 'theme.colors.secondary',
+    label: 'セカンダリカラー',
+    description: 'サブの色を設定します',
+    type: 'color',
+    category: 'theme',
+    defaultValue: '#64748b'
+  }
+];
+
+// 設定カテゴリの定義
+const SETTING_CATEGORIES: SettingCategory[] = [
+  {
+    key: 'general',
+    label: '一般',
+    description: '基本的なシステム設定',
+    icon: 'material-symbols:settings'
+  },
+  {
+    key: 'notifications',
+    label: '通知',
+    description: '通知の受信設定',
+    icon: 'material-symbols:notifications'
+  },
+  {
+    key: 'accessibility',
+    label: 'アクセシビリティ',
+    description: 'アクセシビリティ関連の設定',
+    icon: 'material-symbols:accessibility'
+  },
+  {
+    key: 'theme',
+    label: 'テーマ',
+    description: '外観とテーマの設定',
+    icon: 'material-symbols:palette'
+  }
+];
+
+/**
+ * 設定管理ストア
+ */
+export class SettingsStore {
+  // 現在の設定
+  settings = $state<AppSettings>(structuredClone(DEFAULT_SETTINGS));
+  
+  // 変更追跡
+  isDirty = $state(false);
+  
+  // 保存状態
+  isSaving = $state(false);
+  
+  // エラー状態
+  error = $state<string | null>(null);
+  
+  // 最後の保存時刻
+  lastSaved = $state<Date | null>(null);
+
+  constructor() {
+    this.loadSettings();
   }
 
-  // フィールド値の取得
+  /**
+   * 設定項目の定義を取得
+   */
+  get settingItems(): SettingItem[] {
+    return SETTING_ITEMS;
+  }
+
+  /**
+   * 設定カテゴリの定義を取得
+   */
+  get settingCategories(): SettingCategory[] {
+    return SETTING_CATEGORIES;
+  }
+
+  /**
+   * カテゴリ別の設定項目を取得
+   */
+  getItemsByCategory(categoryKey: string): SettingItem[] {
+    return SETTING_ITEMS.filter(item => item.category === categoryKey);
+  }
+
+  /**
+   * 設定値を取得（ネストしたキーに対応）
+   */
   getValue(key: string): any {
-    return this._state.currentValues[key];
-  }
-
-  // バリデーションエラーの取得
-  getError(key: string): string | undefined {
-    return this._state.errors[key];
-  }
-
-  // 変更があるかチェック
-  hasChanges(): boolean {
-    return Object.keys(this._state.currentValues).some(key => 
-      this._state.currentValues[key] !== this._state.originalValues[key]
-    );
-  }
-
-  // 設定の初期化
-  async initialize(): Promise<void> {
-    this._state.isLoading = true;
-    this._state.errors = {};
-
-    try {
-      // デフォルト設定の生成
-      const defaultConfig = this.generateDefaultConfig();
-      
-      // ローカルストレージから設定を読み込み
-      const savedSettings = this.loadFromStorage();
-      
-      this._state.config = defaultConfig;
-      this._state.currentValues = { ...this.getDefaultValues(), ...savedSettings };
-      this._state.originalValues = { ...this._state.currentValues };
-      this._state.isDirty = false;
-      this._state.lastSaved = new Date();
-    } catch (error) {
-      console.error('設定の初期化に失敗しました:', error);
-      this._state.errors.general = '設定の読み込みに失敗しました';
-    } finally {
-      this._state.isLoading = false;
+    const keys = key.split('.');
+    let value: any = this.settings;
+    
+    for (const k of keys) {
+      if (value && typeof value === 'object' && k in value) {
+        value = value[k];
+      } else {
+        return undefined;
+      }
     }
+    
+    return value;
   }
 
-  // フィールド値の更新
-  updateField(key: string, value: any): void {
-    const field = this.getField(key);
-    if (!field) {
-      console.warn(`設定フィールド '${key}' が見つかりません`);
-      return;
+  /**
+   * 設定値を更新（ネストしたキーに対応）
+   */
+  setValue(key: string, value: any): void {
+    const keys = key.split('.');
+    const lastKey = keys.pop()!;
+    let target: any = this.settings;
+    
+    // ネストしたオブジェクトを辿る
+    for (const k of keys) {
+      if (!target[k] || typeof target[k] !== 'object') {
+        target[k] = {};
+      }
+      target = target[k];
     }
-
+    
+    // 値を設定
+    target[lastKey] = value;
+    this.isDirty = true;
+    this.error = null;
+    
     // バリデーション
-    const error = this.validateField(field, value);
-    if (error) {
-      this._state.errors[key] = error;
+    const item = SETTING_ITEMS.find(item => item.key === key);
+    if (item?.validation) {
+      const validationError = item.validation(value);
+      if (validationError) {
+        this.error = validationError;
+        return;
+      }
+    }
+    
+    // 汎用バリデーション
+    const genericValidationError = validateSettingValue(key, value);
+    if (genericValidationError) {
+      this.error = genericValidationError;
       return;
-    } else {
-      delete this._state.errors[key];
     }
-
-    // 値の更新
-    this._state.currentValues[key] = value;
-    this._state.isDirty = this.hasChanges();
-
-    // 即座反映が必要な設定の処理
-    this.handleImmediateUpdate(key, value);
+    
+    // 即座に反映が必要な設定は自動保存
+    if (this.shouldAutoSave(key)) {
+      this.saveSettings();
+    }
   }
 
-  // 設定の保存
-  async save(): Promise<void> {
-    if (!this._state.isDirty) return;
+  /**
+   * 設定をリセット
+   */
+  resetSettings(): void {
+    this.settings = structuredClone(DEFAULT_SETTINGS);
+    this.isDirty = true;
+    this.error = null;
+  }
 
-    this._state.isSaving = true;
-    this._state.errors = {};
+  /**
+   * 特定のカテゴリをリセット
+   */
+  resetCategory(categoryKey: string): void {
+    const items = this.getItemsByCategory(categoryKey);
+    
+    for (const item of items) {
+      this.setValue(item.key, item.defaultValue);
+    }
+  }
 
+  /**
+   * 設定を保存
+   */
+  async saveSettings(): Promise<void> {
+    if (this.isSaving) return;
+    
+    this.isSaving = true;
+    this.error = null;
+    
     try {
-      // 全フィールドのバリデーション
-      const validationErrors = this.validateAllFields();
-      if (Object.keys(validationErrors).length > 0) {
-        this._state.errors = validationErrors;
-        throw new Error('バリデーションエラーがあります');
-      }
-
       // ローカルストレージに保存
-      this.saveToStorage(this._state.currentValues);
+      localStorage.setItem('app-settings', JSON.stringify(this.settings));
       
-      // TODO: サーバーへの保存処理を追加
-      // await this.saveToServer(this._state.currentValues);
-
-      this._state.originalValues = { ...this._state.currentValues };
-      this._state.isDirty = false;
-      this._state.lastSaved = new Date();
-    } catch (error) {
-      console.error('設定の保存に失敗しました:', error);
-      this._state.errors.general = '設定の保存に失敗しました';
-      throw error;
+      // TODO: サーバーに保存する場合はここで API 呼び出し
+      // await this.saveToServer(this.settings);
+      
+      this.isDirty = false;
+      this.lastSaved = new Date();
+      
+      // CSS カスタムプロパティを更新
+      this.applyCSSVariables();
+      
+    } catch (err) {
+      this.error = err instanceof Error ? err.message : '設定の保存に失敗しました';
+      throw err;
     } finally {
-      this._state.isSaving = false;
+      this.isSaving = false;
     }
   }
 
-  // 設定のリセット
-  async reset(): Promise<void> {
-    this._state.isLoading = true;
-    
+  /**
+   * 設定を読み込み
+   */
+  private loadSettings(): void {
     try {
-      const defaultValues = this.getDefaultValues();
-      this._state.currentValues = { ...defaultValues };
-      this._state.originalValues = { ...defaultValues };
-      this._state.isDirty = false;
-      this._state.errors = {};
-      
-      // ローカルストレージをクリア
-      this.clearStorage();
-      
-      // TODO: サーバーの設定もリセット
-      // await this.resetOnServer();
-      
-      this._state.lastSaved = new Date();
-    } catch (error) {
-      console.error('設定のリセットに失敗しました:', error);
-      this._state.errors.general = '設定のリセットに失敗しました';
-      throw error;
-    } finally {
-      this._state.isLoading = false;
-    }
-  }
-
-  // 変更の破棄
-  discardChanges(): void {
-    this._state.currentValues = { ...this._state.originalValues };
-    this._state.isDirty = false;
-    this._state.errors = {};
-  }
-
-  // デフォルト設定の生成
-  private generateDefaultConfig(): SettingsConfig {
-    return {
-      version: '1.0.0',
-      lastUpdated: new Date(),
-      groups: [
-        {
-          key: 'general',
-          label: '一般設定',
-          description: 'システム全体の基本設定',
-          icon: 'settings',
-          order: 1,
-          fields: [
-            {
-              key: 'facility.name',
-              label: '施設名',
-              description: '介護施設の正式名称',
-              type: 'text',
-              value: '',
-              defaultValue: '',
-              required: true,
-              validation: { minLength: 1, maxLength: 100 }
-            },
-            {
-              key: 'facility.capacity',
-              label: '定員数',
-              description: '施設の利用者定員数',
-              type: 'number',
-              value: 50,
-              defaultValue: 50,
-              required: true,
-              validation: { min: 1, max: 1000 }
-            },
-            {
-              key: 'language',
-              label: '言語',
-              description: 'システム表示言語',
-              type: 'select',
-              value: 'ja',
-              defaultValue: 'ja',
-              options: [
-                { value: 'ja', label: '日本語' },
-                { value: 'en', label: 'English' }
-              ]
-            },
-            {
-              key: 'timezone',
-              label: 'タイムゾーン',
-              type: 'select',
-              value: 'Asia/Tokyo',
-              defaultValue: 'Asia/Tokyo',
-              options: [
-                { value: 'Asia/Tokyo', label: '日本標準時 (JST)' },
-                { value: 'UTC', label: '協定世界時 (UTC)' }
-              ]
-            }
-          ]
-        },
-        {
-          key: 'dashboard',
-          label: 'ダッシュボード',
-          description: 'ダッシュボードの表示設定',
-          icon: 'dashboard',
-          order: 2,
-          fields: [
-            {
-              key: 'dashboard.allowCustomization',
-              label: 'カスタマイズ許可',
-              description: '職員によるダッシュボードカスタマイズを許可',
-              type: 'boolean',
-              value: true,
-              defaultValue: true
-            },
-            {
-              key: 'dashboard.refreshInterval',
-              label: '自動更新間隔（秒）',
-              description: 'ダッシュボードデータの自動更新間隔',
-              type: 'number',
-              value: 300,
-              defaultValue: 300,
-              validation: { min: 30, max: 3600 }
-            },
-            {
-              key: 'dashboard.maxCardsPerUser',
-              label: '最大カード数',
-              description: '1人あたりの最大ダッシュボードカード数',
-              type: 'number',
-              value: 12,
-              defaultValue: 12,
-              validation: { min: 1, max: 50 }
-            }
-          ]
-        },
-        {
-          key: 'users',
-          label: '利用者管理',
-          description: '利用者情報の管理設定',
-          icon: 'people',
-          order: 3,
-          fields: [
-            {
-              key: 'users.requirePhotoUpload',
-              label: '写真アップロード必須',
-              description: '利用者登録時の写真アップロードを必須にする',
-              type: 'boolean',
-              value: false,
-              defaultValue: false
-            },
-            {
-              key: 'users.allowFamilyAccess',
-              label: '家族アクセス許可',
-              description: '家族による利用者情報へのアクセスを許可',
-              type: 'boolean',
-              value: true,
-              defaultValue: true
-            },
-            {
-              key: 'users.autoArchiveInactive',
-              label: '非アクティブ利用者の自動アーカイブ',
-              description: '一定期間非アクティブな利用者を自動でアーカイブ',
-              type: 'boolean',
-              value: false,
-              defaultValue: false
-            },
-            {
-              key: 'users.inactiveThresholdDays',
-              label: '非アクティブ判定日数',
-              description: '何日間アクティビティがないと非アクティブとするか',
-              type: 'number',
-              value: 90,
-              defaultValue: 90,
-              validation: { min: 1, max: 365 }
-            }
-          ]
-        },
-        {
-          key: 'notifications',
-          label: '通知設定',
-          description: '通知機能の設定',
-          icon: 'notifications',
-          order: 4,
-          fields: [
-            {
-              key: 'notifications.email',
-              label: 'メール通知',
-              description: 'メールによる通知を有効にする',
-              type: 'boolean',
-              value: true,
-              defaultValue: true
-            },
-            {
-              key: 'notifications.push',
-              label: 'プッシュ通知',
-              description: 'ブラウザプッシュ通知を有効にする',
-              type: 'boolean',
-              value: true,
-              defaultValue: true
-            },
-            {
-              key: 'notifications.inApp',
-              label: 'アプリ内通知',
-              description: 'アプリケーション内での通知表示を有効にする',
-              type: 'boolean',
-              value: true,
-              defaultValue: true
-            }
-          ]
-        },
-        {
-          key: 'security',
-          label: 'セキュリティ',
-          description: 'セキュリティ関連の設定',
-          icon: 'security',
-          order: 5,
-          fields: [
-            {
-              key: 'security.sessionTimeoutMinutes',
-              label: 'セッションタイムアウト（分）',
-              description: '自動ログアウトまでの時間',
-              type: 'number',
-              value: 480,
-              defaultValue: 480,
-              validation: { min: 15, max: 1440 }
-            },
-            {
-              key: 'security.requireTwoFactor',
-              label: '二要素認証必須',
-              description: 'ログイン時の二要素認証を必須にする',
-              type: 'boolean',
-              value: false,
-              defaultValue: false
-            },
-            {
-              key: 'security.passwordMinLength',
-              label: 'パスワード最小文字数',
-              description: 'パスワードの最小文字数',
-              type: 'number',
-              value: 8,
-              defaultValue: 8,
-              validation: { min: 6, max: 128 }
-            },
-            {
-              key: 'security.maxLoginAttempts',
-              label: '最大ログイン試行回数',
-              description: 'アカウントロックまでの最大試行回数',
-              type: 'number',
-              value: 5,
-              defaultValue: 5,
-              validation: { min: 3, max: 10 }
-            }
-          ]
-        }
-      ]
-    };
-  }
-
-  // デフォルト値の取得
-  private getDefaultValues(): Record<string, any> {
-    const values: Record<string, any> = {};
-    
-    for (const group of this._state.config.groups) {
-      for (const field of group.fields) {
-        values[field.key] = field.defaultValue;
+      const saved = localStorage.getItem('app-settings');
+      if (saved) {
+        const parsedSettings = JSON.parse(saved);
+        this.settings = { ...DEFAULT_SETTINGS, ...parsedSettings };
       }
+      
+      // CSS カスタムプロパティを適用
+      this.applyCSSVariables();
+      
+    } catch (err) {
+      console.error('設定の読み込みに失敗しました:', err);
+      this.settings = structuredClone(DEFAULT_SETTINGS);
+    }
+  }
+
+  /**
+   * 自動保存が必要な設定かチェック
+   */
+  private shouldAutoSave(key: string): boolean {
+    // テーマやアクセシビリティ設定は即座に反映
+    return key.startsWith('theme.') || key.startsWith('accessibility.');
+  }
+
+  /**
+   * CSS カスタムプロパティを適用
+   */
+  private applyCSSVariables(): void {
+    const root = document.documentElement;
+    const theme = this.settings.theme;
+    
+    // カラー変数を設定
+    Object.entries(theme.colors).forEach(([key, value]) => {
+      if (typeof value === 'string') {
+        root.style.setProperty(`--color-${key}`, value);
+      } else if (typeof value === 'object') {
+        Object.entries(value).forEach(([subKey, subValue]) => {
+          root.style.setProperty(`--color-${key}-${subKey}`, subValue);
+        });
+      }
+    });
+    
+    // スペーシング変数を設定
+    Object.entries(theme.spacing).forEach(([key, value]) => {
+      root.style.setProperty(`--spacing-${key}`, value);
+    });
+    
+    // ボーダーラディウス変数を設定
+    Object.entries(theme.borderRadius).forEach(([key, value]) => {
+      root.style.setProperty(`--radius-${key}`, value);
+    });
+    
+    // フォント変数を設定
+    root.style.setProperty('--font-primary', theme.fonts.primary);
+    if (theme.fonts.secondary) {
+      root.style.setProperty('--font-secondary', theme.fonts.secondary);
     }
     
-    return values;
+    // アクセシビリティ設定を適用
+    if (this.settings.accessibility.largeText) {
+      root.classList.add('large-text');
+    } else {
+      root.classList.remove('large-text');
+    }
+    
+    if (this.settings.accessibility.highContrast) {
+      root.classList.add('high-contrast');
+    } else {
+      root.classList.remove('high-contrast');
+    }
+    
+    if (this.settings.accessibility.reducedMotion) {
+      root.classList.add('reduced-motion');
+    } else {
+      root.classList.remove('reduced-motion');
+    }
   }
 
-  // フィールドのバリデーション
-  private validateField(field: SettingField, value: any): string | null {
-    if (!field.validation) return null;
-
-    const validation = field.validation;
-
-    // 必須チェック
-    if (field.required && (value === null || value === undefined || value === '')) {
-      return `${field.label}は必須項目です`;
-    }
-
-    // 型別バリデーション
-    switch (field.type) {
-      case 'text':
-        if (typeof value === 'string') {
-          if (validation.minLength && value.length < validation.minLength) {
-            return `${field.label}は${validation.minLength}文字以上で入力してください`;
-          }
-          if (validation.maxLength && value.length > validation.maxLength) {
-            return `${field.label}は${validation.maxLength}文字以下で入力してください`;
-          }
-          if (validation.pattern && !new RegExp(validation.pattern).test(value)) {
-            return `${field.label}の形式が正しくありません`;
-          }
-        }
-        break;
-
-      case 'number':
-        if (typeof value === 'number') {
-          if (validation.min !== undefined && value < validation.min) {
-            return `${field.label}は${validation.min}以上で入力してください`;
-          }
-          if (validation.max !== undefined && value > validation.max) {
-            return `${field.label}は${validation.max}以下で入力してください`;
-          }
-        }
-        break;
-    }
-
-    // カスタムバリデーション
-    if (validation.custom) {
-      return validation.custom(value);
-    }
-
-    return null;
+  /**
+   * 設定をエクスポート
+   */
+  exportSettings(): string {
+    return JSON.stringify({
+      settings: this.settings,
+      exportedAt: new Date().toISOString(),
+      version: '1.0'
+    }, null, 2);
   }
 
-  // 全フィールドのバリデーション
-  private validateAllFields(): Record<string, string> {
-    const errors: Record<string, string> = {};
-
-    for (const group of this._state.config.groups) {
-      for (const field of group.fields) {
-        const value = this._state.currentValues[field.key];
-        const error = this.validateField(field, value);
-        if (error) {
-          errors[field.key] = error;
-        }
+  /**
+   * 設定をインポート
+   */
+  importSettings(jsonData: string): boolean {
+    try {
+      const importData = JSON.parse(jsonData);
+      
+      if (importData.settings) {
+        this.settings = { ...DEFAULT_SETTINGS, ...importData.settings };
+        this.isDirty = true;
+        this.applyCSSVariables();
+        return true;
       }
-    }
-
-    return errors;
-  }
-
-  // 即座反映処理
-  private handleImmediateUpdate(key: string, value: any): void {
-    // 特定の設定は即座に反映
-    switch (key) {
-      case 'language':
-        // 言語設定の即座反映
-        document.documentElement.lang = value;
-        break;
-      case 'theme':
-        // テーマ設定の即座反映
-        document.documentElement.setAttribute('data-theme', value);
-        break;
-    }
-  }
-
-  // ローカルストレージへの保存
-  private saveToStorage(values: Record<string, any>): void {
-    try {
-      localStorage.setItem('care-facility-settings', JSON.stringify(values));
-    } catch (error) {
-      console.error('ローカルストレージへの保存に失敗しました:', error);
-    }
-  }
-
-  // ローカルストレージからの読み込み
-  private loadFromStorage(): Record<string, any> {
-    try {
-      const stored = localStorage.getItem('care-facility-settings');
-      return stored ? JSON.parse(stored) : {};
-    } catch (error) {
-      console.error('ローカルストレージからの読み込みに失敗しました:', error);
-      return {};
-    }
-  }
-
-  // ローカルストレージのクリア
-  private clearStorage(): void {
-    try {
-      localStorage.removeItem('care-facility-settings');
-    } catch (error) {
-      console.error('ローカルストレージのクリアに失敗しました:', error);
+      
+      return false;
+    } catch (err) {
+      this.error = '設定のインポートに失敗しました';
+      return false;
     }
   }
 }
 
-// シングルトンインスタンス
+// グローバルインスタンス
 export const settingsStore = new SettingsStore();

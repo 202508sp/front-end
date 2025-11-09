@@ -172,7 +172,7 @@
 							type="button"
 							class="
 								flex items:center justify:center w:32px h:32px
-								rounded:6px bg:transparent hover:bg:gray-100
+								r:6px bg:transparent hover:bg:gray-100
 								transition:background-color|200ms
 								focus:outline:2|solid|blue-500 focus:outline-offset:2
 							"
@@ -186,7 +186,7 @@
 					<div class="flex:1 min-w:0">
 						{#if title}
 							<h2 id="sidebar-title" class="
-								font:600 text:16px text:gray-900 truncate
+								 text:16px text:gray-900 truncate
 								@md:text:18px
 							">
 								{title}
@@ -213,7 +213,7 @@
 							type="button"
 							class="
 								flex items:center justify:center w:32px h:32px
-								rounded:6px bg:transparent hover:bg:gray-100
+								r:6px bg:transparent hover:bg:gray-100
 								transition:background-color|200ms
 								focus:outline:2|solid|blue-500 focus:outline-offset:2
 							"
@@ -233,7 +233,7 @@
 						type="button"
 						class="
 							flex items:center justify:center w:32px h:32px
-							rounded:6px bg:transparent hover:bg:gray-100
+							r:6px bg:transparent hover:bg:gray-100
 							transition:background-color|200ms
 							focus:outline:2|solid|blue-500 focus:outline-offset:2
 						"
