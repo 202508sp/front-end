@@ -20,5 +20,8 @@ export type * from './report';
 // Statistics types
 export type * from './statistics';
 
+// Settings types
+export type * from './settings';
+
 // Common types
 export type * from './common';
