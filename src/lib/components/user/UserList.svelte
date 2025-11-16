@@ -5,7 +5,7 @@
 	import Button from '$lib/components/ui/Button.svelte';
 	import FormField from '$lib/components/ui/FormField.svelte';
 	import { onMount, untrack } from 'svelte';
-	import { formatDate } from '$lib/utils';
+	import { fly } from 'svelte/transition';
 
 	interface Props {
 		onUserSelect?: (user: User) => void;
@@ -200,18 +200,16 @@
 	}
 </script>
 
-<div class="h:full w:full flex:column flex {className}" data-testid={testId}>
+<div
+	class="h:100% w:full max-h:calc(100dvh-90px-80px-32px-4px) overflow:hidden flex:column flex {className}"
+	data-testid={testId}
+>
 	<!-- Header with search and controls -->
 	<div
-		class="flex-shrink:0 w:100% flex:row ai:center jc:space-between px:16px py:10px bg:imemo-beige-100 box-shadow:md bb:4px|double|var(--color-tertiary) flex"
+		class="flex-shrink:0 rel w:100% flex:row ai:center jc:space-between px:16px py:10px bg:imemo-beige-100 box-shadow:md bb:4px|double|var(--color-tertiary) flex"
 	>
 		<div class="ai:center jc:space-betwrrn flex">
 			<div class="gap:8px ai:center flex">
-				<svg class="w:24px h:24px" fill="currentColor" viewBox="0 0 24 24">
-					<path
-						d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"
-					/>
-				</svg>
 				<h2 class="font:20px text:imemo-brown-700">利用者一覧</h2>
 			</div>
 			<div class="gap:8px bg:imemo-beige-50 px:12px py:6px r:8px ai:center flex">
@@ -248,7 +246,9 @@
 			</div>
 			<button
 				onclick={() => (showFilters = !showFilters)}
-				class="gap:6px px:16px py:10px bg:imemo-brown-400 fg:var(--color-text) r:8px font:14px hover:bg:imemo-brown-500 border:none ai:center flex cursor-pointer transition-colors"
+				class="gap:6px px:16px py:10px fg:var(--color-text) r:8px font:14px bg:var(--color-secondary):hover {showFilters
+					? 'bg:var(--color-secondary)'
+					: ''} border:none ai:center flex cursor-pointer transition-colors"
 				data-testid="toggle-filters"
 			>
 				<svg class="w:16px h:16px" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -276,12 +276,56 @@
 					/>
 				</svg>
 			</button>
+			<div class="gap:16px ai:center flex">
+				<div class="gap:8px ai:center flex">
+					<svg
+						class="w:16px h:16px text:imemo-brown-400"
+						fill="none"
+						stroke="currentColor"
+						viewBox="0 0 24 24"
+					>
+						<path
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							stroke-width="2"
+							d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12"
+						/>
+					</svg>
+					<select
+						id="sort-select"
+						onchange={handleSortChange}
+						class="px:12px py:8px border:1|solid|imemo-brown-200 r:8px font:14px text:imemo-brown-700 bg:white focus:outline:none focus:border:imemo-brown-400 cursor-pointer"
+						data-testid="sort-select"
+					>
+						{#each sortOptions as option}
+							<option value="{option.value}-asc">{option.label} (昇順)</option>
+							<option value="{option.value}-desc">{option.label} (降順)</option>
+						{/each}
+					</select>
+				</div>
+
+				<div class="gap:8px ai:center flex">
+					<span class="font:14px text:imemo-brown-600">表示件数:</span>
+					<select
+						id="items-per-page-select"
+						value={userStore.itemsPerPage}
+						onchange={handleItemsPerPageChange}
+						class="px:12px py:8px border:1|solid|imemo-brown-200 r:8px font:14px text:imemo-brown-700 bg:white focus:outline:none focus:border:imemo-brown-400 cursor-pointer"
+						data-testid="items-per-page-select"
+					>
+						{#each itemsPerPageOptions as option}
+							<option value={option}>{option}件</option>
+						{/each}
+					</select>
+				</div>
+			</div>
 		</div>
 
 		<!-- Filters -->
 		{#if showFilters}
 			<div
-				class="grid-cols:1 md:grid-cols:2 lg:grid-cols:4 gap:12px p:16px bg:imemo-beige-50 r:8px border:1|solid|imemo-brown-200 grid"
+				transition:fly={{ y: -10, duration: 100 }}
+				class="abs top:60px right:280px bg:var(--color-background) b:2px|solid|var(--color-text) grid-cols:1 md:grid-cols:2 lg:grid-cols:4 gap:12px p:16px bg:imemo-beige-50 r:8px border:1|solid|imemo-brown-200 grid"
 			>
 				<!-- Care Level Filter -->
 				<fieldset>
@@ -368,53 +412,6 @@
 				</fieldset>
 			</div>
 		{/if}
-
-		<!-- Sort and Items per page -->
-		<div class="bt:1|solid|imemo-brown-200 ai:center jc:space-betwrrn flex">
-			<div class="gap:16px ai:center flex">
-				<div class="gap:8px ai:center flex">
-					<svg
-						class="w:16px h:16px text:imemo-brown-400"
-						fill="none"
-						stroke="currentColor"
-						viewBox="0 0 24 24"
-					>
-						<path
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							stroke-width="2"
-							d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12"
-						/>
-					</svg>
-					<select
-						id="sort-select"
-						onchange={handleSortChange}
-						class="px:12px py:8px border:1|solid|imemo-brown-200 r:8px font:14px text:imemo-brown-700 bg:white focus:outline:none focus:border:imemo-brown-400 cursor-pointer"
-						data-testid="sort-select"
-					>
-						{#each sortOptions as option}
-							<option value="{option.value}-asc">{option.label} (昇順)</option>
-							<option value="{option.value}-desc">{option.label} (降順)</option>
-						{/each}
-					</select>
-				</div>
-
-				<div class="gap:8px ai:center flex">
-					<span class="font:14px text:imemo-brown-600">表示件数:</span>
-					<select
-						id="items-per-page-select"
-						value={userStore.itemsPerPage}
-						onchange={handleItemsPerPageChange}
-						class="px:12px py:8px border:1|solid|imemo-brown-200 r:8px font:14px text:imemo-brown-700 bg:white focus:outline:none focus:border:imemo-brown-400 cursor-pointer"
-						data-testid="items-per-page-select"
-					>
-						{#each itemsPerPageOptions as option}
-							<option value={option}>{option}件</option>
-						{/each}
-					</select>
-				</div>
-			</div>
-		</div>
 	</div>
 
 	<!-- Loading state -->
@@ -490,14 +487,14 @@
 		</div>
 	{:else}
 		<!-- User list -->
-		<div class="p:16px flex-1 overflow-auto">
+		<div class="p:16px overflow:auto flex-1">
 			<div class="gap:12px flex:column flex">
 				{#each userStore.paginatedUsers as user, i (user.id)}
 					<div
 						class="px:16px w:100% {i !== userStore.paginatedUsers.length - 1
 							? 'bb:2px|solid|var(--color-tertiary) pb:12px '
-							: 'pb:0px'} bg:imemo-beige-100 cursor-pointer transition-all {userStore.selectedUser?.id ===
-						user.id
+							: 'pb:0px'} bg:imemo-beige-100 cursor-pointer transition-all {userStore.selectedUser
+							?.id === user.id
 							? 'box-shadow:lg border:2|solid|imemo-brown-400'
 							: 'border:1|solid|imemo-brown-200'}"
 						onclick={() => handleUserClick(user)}
@@ -512,8 +509,8 @@
 						}}
 					>
 						<div class="w:100%">
-							<div class="flex flex:row ai:center jc:space-between gap:24px">
-								<div class="flex ai:center">
+							<div class="flex:row ai:center jc:space-between gap:24px flex">
+								<div class="ai:center flex">
 									<div class="gap:8px mb:4px flex:row ai:center flex">
 										<h3 class="font:18px text:imemo-brown-700">
 											{user.name}

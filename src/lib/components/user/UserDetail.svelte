@@ -16,8 +16,42 @@
 
 	let { user, isEditMode = false, onSave, onCancel }: Props = $props();
 
+	function cloneUserData(target: User): User {
+		return {
+			...target,
+			birthDate: new Date(target.birthDate),
+			admissionDate: new Date(target.admissionDate),
+			createdAt: new Date(target.createdAt),
+			updatedAt: new Date(target.updatedAt),
+			address: { ...target.address },
+			emergencyContact: {
+				...target.emergencyContact,
+				address: target.emergencyContact.address
+					? { ...target.emergencyContact.address }
+					: undefined
+			},
+			medicalInfo: {
+				...target.medicalInfo,
+				allergies: [...target.medicalInfo.allergies],
+				conditions: [...target.medicalInfo.conditions],
+				restrictions: [...target.medicalInfo.restrictions],
+				medications: target.medicalInfo.medications.map((med) => ({
+					...med,
+					startDate: med.startDate ? new Date(med.startDate) : med.startDate,
+					endDate: med.endDate ? new Date(med.endDate) : med.endDate
+				}))
+			},
+			familyMembers: target.familyMembers.map((member) => ({ ...member })),
+			notes: target.notes.map((note) => ({
+				...note,
+				createdAt: new Date(note.createdAt),
+				updatedAt: new Date(note.updatedAt)
+			}))
+		};
+	}
+
 	// Edit form state
-	let editedUser = $state<User>(structuredClone(user));
+	let editedUser = $state<User>(cloneUserData(user));
 	let expandedSections = $state<Set<string>>(new Set());
 	let activeTab = $state<'basic' | 'medical' | 'family' | 'notes'>('basic');
 	let validationErrors = $state<ValidationError[]>([]);
@@ -27,7 +61,7 @@
 	// Update edited user when user prop changes
 	$effect(() => {
 		if (!isEditMode) {
-			editedUser = structuredClone(user);
+			editedUser = cloneUserData(user);
 		}
 	});
 
@@ -80,7 +114,7 @@
 	}
 
 	function handleCancel() {
-		editedUser = structuredClone(user);
+		editedUser = cloneUserData(user);
 		validationErrors = [];
 		onCancel?.();
 	}
@@ -155,7 +189,7 @@
 	}
 </script>
 
-<div class="flex:col h:full flex">
+<div class="flex:col h:full w:100% flex">
 	{#if isEditMode}
 		<!-- Edit Mode Header -->
 		<div class="p:16px border-b:2|solid|imemo-brown-200 bg:imemo-beige-100">

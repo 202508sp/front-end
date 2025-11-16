@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
 	import Icon from '@iconify/svelte';
+	import { fly } from 'svelte/transition';
 
 	interface Props {
 		isOpen?: boolean;
@@ -111,7 +112,7 @@
 	// Get width classes based on level and width prop
 	function getWidthClasses() {
 		if (isFullscreen) return 'w:100vw';
-		
+
 		const baseWidths = {
 			narrow: level === 1 ? 'w:320px' : 'w:480px',
 			normal: level === 1 ? 'w:400px' : 'w:600px',
@@ -124,7 +125,7 @@
 	// Get responsive classes
 	function getResponsiveClasses() {
 		if (isFullscreen) return 'w:100vw h:100vh';
-		
+
 		return `
 			w:100vw h:100vh
 			@md:w:auto @md:h:100vh @md:max-w:90vw
@@ -138,44 +139,31 @@
 {#if isOpen}
 	<!-- Overlay -->
 	<div
-		class="
-			fixed inset:0 bg:black/.5 z:1000
-			@md:bg:transparent @md:pointer-events:none
-		"
+		class="inset:0 bg:black/.4 z:9999 fixed"
 		onclick={handleOverlayClick}
 		role="presentation"
 	>
 		<!-- Sidebar Container -->
 		<div
+			transition:fly={{ x: 20, duration: 100 }}
 			bind:this={sidebarElement}
-			class="
-				fixed top:0 right:0 h:100vh bg:white shadow:xl
-				flex flex:col
-				transform transition:transform|300ms|ease-in-out
-				{getResponsiveClasses()}
-				{isOpen ? 'translate-x:0' : 'translate-x:100%'}
-			"
+			class="top:0 right:0 h:100vh w:600px bg:var(--color-background) rl:40px shadow:0|0|20px|black/.2 flex:col transition:transform|300ms|ease-in-out fixed flex transform {getResponsiveClasses()} {isOpen
+				? 'translate-x:0'
+				: 'translate-x:100%'}"
 			role="dialog"
 			aria-modal="true"
 			aria-labelledby={title ? 'sidebar-title' : undefined}
 			aria-describedby={subtitle ? 'sidebar-subtitle' : undefined}
 		>
 			<!-- Header -->
-			<header class="
-				flex items:center justify:between p:16px|20px
-				border-b:1|solid|gray-200 bg:gray-50
-				min-h:64px
-			">
-				<div class="flex items:center gap:12px flex:1 min-w:0">
+			<header
+				class="ai:center jc:between p:20px|40px rtl:40px border-b:1|solid|gray-200 bg:var(--color-secondary) min-h:64px flex"
+			>
+				<div class="ai:center gap:12px flex:1 min-w:0 flex">
 					{#if level > 1 && onBack}
 						<button
 							type="button"
-							class="
-								flex items:center justify:center w:32px h:32px
-								r:6px bg:transparent hover:bg:gray-100
-								transition:background-color|200ms
-								focus:outline:2|solid|blue-500 focus:outline-offset:2
-							"
+							class="ai:center jc:center w:32px h:32px r:6px bg:transparent hover:bg:gray-100 transition:background-color|200ms focus:outline:2|solid|blue-500 focus:outline-offset:2 flex"
 							onclick={handleBack}
 							aria-label="戻る"
 						>
@@ -185,24 +173,30 @@
 
 					<div class="flex:1 min-w:0">
 						{#if title}
-							<h2 id="sidebar-title" class="
-								 text:16px text:gray-900 truncate
-								@md:text:18px
-							">
+							<h2
+								id="sidebar-title"
+								class="
+								 text:16px text:gray-900 @md:text:18px
+								truncate
+							"
+							>
 								{title}
 							</h2>
 						{/if}
 						{#if subtitle}
-							<p id="sidebar-subtitle" class="
-								text:14px text:gray-600 truncate mt:2px
-							">
+							<p
+								id="sidebar-subtitle"
+								class="
+								text:14px text:gray-600 mt:2px truncate
+							"
+							>
 								{subtitle}
 							</p>
 						{/if}
 					</div>
 				</div>
 
-				<div class="flex items:center gap:8px ml:12px">
+				<div class="ai:center gap:8px ml:12px flex">
 					{#if actions}
 						{@render actions()}
 					{/if}
@@ -212,18 +206,20 @@
 						<button
 							type="button"
 							class="
-								flex items:center justify:center w:32px h:32px
-								r:6px bg:transparent hover:bg:gray-100
-								transition:background-color|200ms
-								focus:outline:2|solid|blue-500 focus:outline-offset:2
+								ai:center jc:center w:32px h:32px r:6px
+								bg:transparent hover:bg:gray-100 transition:background-color|200ms
+								focus:outline:2|solid|blue-500
+								focus:outline-offset:2 flex
 							"
 							onclick={handleToggleFullscreen}
 							aria-label={isFullscreen ? '通常表示に戻す' : '全画面表示'}
 							title={isFullscreen ? '通常表示に戻す (F11)' : '全画面表示 (F11)'}
 						>
-							<Icon 
-								icon={isFullscreen ? 'material-symbols:fullscreen-exit' : 'material-symbols:fullscreen'} 
-								class="w:20px h:20px text:gray-600" 
+							<Icon
+								icon={isFullscreen
+									? 'material-symbols:fullscreen-exit'
+									: 'material-symbols:fullscreen'}
+								class="w:20px h:20px text:gray-600"
 							/>
 						</button>
 					{/if}
@@ -232,10 +228,10 @@
 					<button
 						type="button"
 						class="
-							flex items:center justify:center w:32px h:32px
-							r:6px bg:transparent hover:bg:gray-100
-							transition:background-color|200ms
-							focus:outline:2|solid|blue-500 focus:outline-offset:2
+							ai:center jc:center w:32px h:32px r:6px
+							bg:transparent hover:bg:gray-100 transition:background-color|200ms
+							focus:outline:2|solid|blue-500
+							focus:outline-offset:2 flex
 						"
 						onclick={handleClose}
 						aria-label="閉じる"
