@@ -5,6 +5,8 @@
   import { reportStore } from '$lib/stores/report.svelte';
   import { formatDate } from '$lib/utils/date';
   import Icon from '@iconify/svelte';
+  import { makeUniversalDraggable, makeUniversalDropZone } from '$lib/utils/dragdrop.js';
+  import type { DragData, DropZone } from '$lib/utils/dragdrop.js';
   
   interface Props {
     userId?: string;
@@ -93,6 +95,73 @@
   function handleReportClick(report: Report) {
     reportStore.selectReport(report);
     onReportSelect?.(report);
+  }
+
+  function isFavoriteReport(reportId: string): boolean {
+    return reportStore.favoriteReportIds.includes(reportId);
+  }
+
+  function favoriteReportDraggable(element: HTMLElement, params: { reportId: string }) {
+    let cleanup: (() => void) | null = null;
+
+    function setup(p: { reportId: string }) {
+      cleanup?.();
+
+      const dragData: DragData = {
+        id: p.reportId,
+        type: 'favorite-report',
+        data: { reportId: p.reportId }
+      };
+
+      cleanup = makeUniversalDraggable(element, dragData, {
+        dragOptions: {
+          ghostOpacity: 0.5
+        },
+        touchOptions: {
+          threshold: 10,
+          ghostElement: true
+        }
+      });
+    }
+
+    setup(params);
+
+    return {
+      update: setup,
+      destroy: () => cleanup?.()
+    };
+  }
+
+  function favoriteReportDropZone(element: HTMLElement, params: { targetReportId: string }) {
+    let cleanup: (() => void) | null = null;
+
+    function setup(p: { targetReportId: string }) {
+      cleanup?.();
+
+      const zone: DropZone = {
+        id: `favorite-report-${p.targetReportId}`,
+        element,
+        accepts: ['favorite-report'],
+        onDrop: (data, position) => {
+          const insertAfter = position.y > element.getBoundingClientRect().height / 2;
+          reportStore.moveFavoriteReport(data.id, p.targetReportId, insertAfter);
+        }
+      };
+
+      cleanup = makeUniversalDropZone(element, zone, {
+        dragOverClass: 'drag-over',
+        dragActiveClass: 'drag-active',
+        dropValidClass: 'drop-valid',
+        dropInvalidClass: 'drop-invalid'
+      });
+    }
+
+    setup(params);
+
+    return {
+      update: setup,
+      destroy: () => cleanup?.()
+    };
   }
   
   function getStatusColor(status: ReportStatus): string {
@@ -261,6 +330,123 @@
         <p class="color:gray-600">レポートが見つかりません</p>
       </div>
     {:else}
+      {#if reportStore.favoriteReports.length > 0}
+        <div class="p:12px border-b:1px|solid|gray-200 bg:gray-50">
+          <div class="flex items:center justify-between mb:8px">
+            <div class="flex items:center gap:6px">
+              <Icon icon="material-symbols:star" class="w:18px h:18px color:yellow-600" />
+              <h3 class="font:14px font:bold color:gray-800">お気に入り</h3>
+              <span class="font:12px color:gray-600">({reportStore.favoriteReports.length})</span>
+            </div>
+            <span class="font:12px color:gray-600">ドラッグで並び替え</span>
+          </div>
+
+          <div class="divide-y:1px|solid|gray-200 bg:white r:8px border:1px|solid|gray-200 overflow:hidden">
+            {#each reportStore.favoriteReports as report (report.id)}
+              <div
+                use:favoriteReportDropZone={{ targetReportId: report.id }}
+                class="grid grid-cols:12 gap:12px p:12px hover:bg:gray-50 cursor:pointer"
+                role="button"
+                tabindex="0"
+                onclick={() => handleReportClick(report)}
+                onkeydown={(e) => e.key === 'Enter' && handleReportClick(report)}
+                data-testid="report-favorite-item-{report.id}"
+              >
+                <div class="col-span:3">
+                  <div class="flex items:start justify-between gap:8px">
+                    <div class="flex items:center gap:8px">
+                      <span
+                        use:favoriteReportDraggable={{ reportId: report.id }}
+                        class="w:24px h:24px flex items:center justify-center cursor:grab"
+                        title="ドラッグで並び替え"
+                        aria-label="drag"
+                      >
+                        <Icon icon="material-symbols:drag-indicator" class="w:18px h:18px color:gray-500" />
+                      </span>
+                      <h3 class="font:14px font:medium mb:2px">{report.title}</h3>
+                    </div>
+
+                    <button
+                      onclick={(e) => {
+                        e.stopPropagation();
+                        reportStore.toggleFavoriteReport(report.id);
+                      }}
+                      class="p:4px hover:bg:yellow-50 r:4px"
+                      title="お気に入り解除"
+                      aria-label="favorite"
+                      data-testid="favorite-toggle-{report.id}"
+                    >
+                      <Icon icon="material-symbols:star" class="w:18px h:18px color:yellow-600" />
+                    </button>
+                  </div>
+                  {#if report.tags.length > 0}
+                    <div class="flex flex:wrap gap:4px">
+                      {#each report.tags.slice(0, 3) as tag}
+                        <span class="px:6px py:2px bg:gray-100 color:gray-700 r:12px font:12px">{tag}</span>
+                      {/each}
+                      {#if report.tags.length > 3}
+                        <span class="px:6px py:2px bg:gray-100 color:gray-700 r:12px font:12px">+{report.tags.length - 3}</span>
+                      {/if}
+                    </div>
+                  {/if}
+                </div>
+
+                <div class="col-span:1">
+                  <span class="px:8px py:4px bg:gray-100 color:gray-700 r:12px font:12px">{getTypeLabel(report.type)}</span>
+                </div>
+
+                <div class="col-span:1">
+                  <span class="px:8px py:4px r:12px font:12px {getStatusColor(report.status)}">{getStatusLabel(report.status)}</span>
+                </div>
+
+                <div class="col-span:2">
+                  <p class="font:14px">{report.authorName}</p>
+                </div>
+
+                <div class="col-span:2">
+                  <p class="font:14px">{formatDate(report.date)}</p>
+                  <p class="font:12px color:gray-500">作成: {formatDate(report.createdAt)}</p>
+                </div>
+
+                <div class="col-span:1 text:center">
+                  {#if report.isPublishedToFamily}
+                    <Icon icon="material-symbols:check-circle" class="w:20px h:20px color:green-500" />
+                  {:else}
+                    <Icon icon="material-symbols:remove-circle" class="w:20px h:20px color:gray-400" />
+                  {/if}
+                </div>
+
+                {#if showActions}
+                  <div class="col-span:2 flex items:center justify-center gap:8px">
+                    <button
+                      onclick={(e) => {
+                        e.stopPropagation();
+                        onReportEdit?.(report);
+                      }}
+                      class="p:4px hover:bg:blue-100 r:4px"
+                      title="編集"
+                    >
+                      <Icon icon="material-symbols:edit" class="w:16px h:16px color:blue-600" />
+                    </button>
+
+                    <button
+                      onclick={(e) => {
+                        e.stopPropagation();
+                        onReportDelete?.(report);
+                      }}
+                      class="p:4px hover:bg:red-100 r:4px"
+                      title="削除"
+                    >
+                      <Icon icon="material-symbols:delete" class="w:16px h:16px color:red-600" />
+                    </button>
+                  </div>
+                {/if}
+              </div>
+            {/each}
+          </div>
+        </div>
+      {/if}
+
       <!-- テーブルヘッダー -->
       <div class="sticky top:0 bg:white border-b:1px|solid|gray-200 z:10">
         <div class="grid grid-cols:12 gap:12px p:12px font:14px font:bold color:gray-700">
@@ -339,7 +525,7 @@
       
       <!-- レポート行 -->
       <div class="divide-y:1px|solid|gray-100">
-        {#each reportStore.filteredReports as report}
+        {#each reportStore.nonFavoriteReports as report}
           <div 
             class="grid grid-cols:12 gap:12px p:12px hover:bg:gray-50 cursor:pointer"
             role="button"
@@ -348,7 +534,26 @@
             onkeydown={(e) => e.key === 'Enter' && handleReportClick(report)}
           >
             <div class="col-span:3">
-              <h3 class="font:14px font:medium mb:2px">{report.title}</h3>
+              <div class="flex items:start justify-between gap:8px">
+                <h3 class="font:14px font:medium mb:2px">{report.title}</h3>
+                <button
+                  onclick={(e) => {
+                    e.stopPropagation();
+                    reportStore.toggleFavoriteReport(report.id);
+                  }}
+                  class="p:4px hover:bg:yellow-50 r:4px"
+                  title={isFavoriteReport(report.id) ? 'お気に入り解除' : 'お気に入りに追加'}
+                  aria-label="favorite"
+                  data-testid="favorite-toggle-{report.id}"
+                >
+                  <Icon
+                    icon={isFavoriteReport(report.id) ? 'material-symbols:star' : 'material-symbols:star-outline'}
+                    class={isFavoriteReport(report.id)
+                      ? 'w:18px h:18px color:yellow-600'
+                      : 'w:18px h:18px color:gray-400'}
+                  />
+                </button>
+              </div>
               {#if report.tags.length > 0}
                 <div class="flex flex:wrap gap:4px">
                   {#each report.tags.slice(0, 3) as tag}

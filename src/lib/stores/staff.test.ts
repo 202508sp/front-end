@@ -2,9 +2,21 @@
  * StaffStore のテスト
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { StaffStore } from './staff.svelte';
 import type { Staff, WorkSchedule } from '$lib/types/staff';
+
+// localStorage のモック（お気に入り永続化の影響を排除）
+const localStorageMock = {
+  getItem: vi.fn(),
+  setItem: vi.fn(),
+  removeItem: vi.fn(),
+  clear: vi.fn()
+};
+
+Object.defineProperty(window, 'localStorage', {
+  value: localStorageMock
+});
 
 describe('StaffStore', () => {
   let staffStore: StaffStore;
@@ -27,6 +39,8 @@ describe('StaffStore', () => {
   };
   
   beforeEach(() => {
+		vi.clearAllMocks();
+		localStorageMock.getItem.mockReturnValue(null);
     staffStore = new StaffStore();
   });
   
@@ -40,6 +54,7 @@ describe('StaffStore', () => {
       expect(staffStore.currentPage).toBe(1);
       expect(staffStore.itemsPerPage).toBe(20);
       expect(staffStore.scheduleView).toBe('week');
+			expect(staffStore.favoriteStaffIds).toEqual([]);
     });
   });
   

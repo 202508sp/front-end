@@ -6,6 +6,8 @@
   import FormField from '$lib/components/ui/FormField.svelte';
   import { onMount } from 'svelte';
   import { formatDate } from '$lib/utils';
+  import { makeUniversalDraggable, makeUniversalDropZone } from '$lib/utils/dragdrop.js';
+  import type { DragData, DropZone } from '$lib/utils/dragdrop.js';
 
   interface Props {
     onStaffSelect?: (staff: Staff) => void;
@@ -94,6 +96,73 @@
   function handleStaffClick(staff: Staff) {
     staffStore.selectStaff(staff);
     onStaffSelect?.(staff);
+  }
+
+  function isFavoriteStaff(staffId: string): boolean {
+    return staffStore.favoriteStaffIds.includes(staffId);
+  }
+
+  function favoriteStaffDraggable(element: HTMLElement, params: { staffId: string }) {
+    let cleanup: (() => void) | null = null;
+
+    function setup(p: { staffId: string }) {
+      cleanup?.();
+
+      const dragData: DragData = {
+        id: p.staffId,
+        type: 'favorite-staff',
+        data: { staffId: p.staffId }
+      };
+
+      cleanup = makeUniversalDraggable(element, dragData, {
+        dragOptions: {
+          ghostOpacity: 0.5
+        },
+        touchOptions: {
+          threshold: 10,
+          ghostElement: true
+        }
+      });
+    }
+
+    setup(params);
+
+    return {
+      update: setup,
+      destroy: () => cleanup?.()
+    };
+  }
+
+  function favoriteStaffDropZone(element: HTMLElement, params: { targetStaffId: string }) {
+    let cleanup: (() => void) | null = null;
+
+    function setup(p: { targetStaffId: string }) {
+      cleanup?.();
+
+      const zone: DropZone = {
+        id: `favorite-staff-${p.targetStaffId}`,
+        element,
+        accepts: ['favorite-staff'],
+        onDrop: (data, position) => {
+          const insertAfter = position.y > element.getBoundingClientRect().height / 2;
+          staffStore.moveFavoriteStaff(data.id, p.targetStaffId, insertAfter);
+        }
+      };
+
+      cleanup = makeUniversalDropZone(element, zone, {
+        dragOverClass: 'drag-over',
+        dragActiveClass: 'drag-active',
+        dropValidClass: 'drop-valid',
+        dropInvalidClass: 'drop-invalid'
+      });
+    }
+
+    setup(params);
+
+    return {
+      update: setup,
+      destroy: () => cleanup?.()
+    };
   }
 
   // Handle sort change
@@ -354,7 +423,7 @@
         </Button>
       </div>
     </div>
-  {:else if staffStore.paginatedStaff.length === 0}
+  {:else if staffStore.favoriteStaff.length === 0 && staffStore.paginatedNonFavoriteStaff.length === 0}
     <!-- Empty state -->
     <div class="flex-1 flex ai:center jc:center">
       <div class="text:center">
@@ -372,8 +441,94 @@
   {:else}
     <!-- Staff list -->
     <div class="flex-1 overflow-auto">
+      <div class="p:4">
+        {#if staffStore.favoriteStaff.length > 0}
+          <div class="p:4 mb:4 bg:care-gray-50 r:24px border:1|solid|care-gray-200">
+            <div class="flex ai:center jc:space-between mb:3">
+              <div class="flex ai:center gap:2">
+                <svg class="w:4 h:4 text:care-text-secondary" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+                </svg>
+                <h3 class="text:sm font:medium text:care-text-primary">お気に入り</h3>
+                <span class="text:xs text:care-text-secondary">({staffStore.favoriteStaff.length})</span>
+              </div>
+              <span class="text:xs text:care-text-secondary">ドラッグで並び替え</span>
+            </div>
+
+            <div class="divide-y:1|solid|care-gray-200">
+              {#each staffStore.favoriteStaff as staff (staff.id)}
+                <div
+                  use:favoriteStaffDropZone={{ targetStaffId: staff.id }}
+                  class="p:4 hover:bg:care-gray-50 cursor-pointer transition-colors"
+                  onclick={() => handleStaffClick(staff)}
+                  data-testid="staff-favorite-item-{staff.id}"
+                  role="button"
+                  tabindex="0"
+                  onkeydown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      handleStaffClick(staff);
+                    }
+                  }}
+                >
+                  <div class="flex ai:center jc:space-betwrrn">
+                    <div class="flex-1">
+                      <div class="flex ai:center gap:2 mb:2">
+                        <span
+                          use:favoriteStaffDraggable={{ staffId: staff.id }}
+                          class="w:5 h:5 ai:center jc:center flex cursor:grab"
+                          aria-label="drag"
+                          title="ドラッグで並び替え"
+                        >
+                          <svg class="w:4 h:4 text:care-text-secondary" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                            <path d="M10 4H8v2h2V4zm6 0h-2v2h2V4zM10 9H8v2h2V9zm6 0h-2v2h2V9zM10 14H8v2h2v-2zm6 0h-2v2h2v-2zM10 19H8v2h2v-2zm6 0h-2v2h2v-2z" />
+                          </svg>
+                        </span>
+                        <h3 class="text:lg font:medium text:care-text-primary">{staff.name}</h3>
+                        <span class="text:sm text:care-text-secondary">({staff.nameKana})</span>
+                        <span class="px:2 py:1 bg:care-secondary-100 text:care-secondary-700 text:xs r:9999px">{getRoleLabel(staff.role)}</span>
+                        {#if !staff.isActive}
+                          <span class="px:2 py:1 bg:care-gray-100 text:care-gray-700 text:xs r:9999px">非アクティブ</span>
+                        {/if}
+                      </div>
+
+                      <div class="grid grid-cols:2 md:grid-cols:4 gap:4 text:sm text:care-text-secondary">
+                        <div><span class="font:medium">部署:</span> {staff.department}</div>
+                        <div><span class="font:medium">メール:</span> {staff.email}</div>
+                        <div><span class="font:medium">入社日:</span> {formatDate(staff.hireDate)}</div>
+                        <div><span class="font:medium">更新日:</span> {formatDate(staff.updatedAt)}</div>
+                      </div>
+                    </div>
+
+                    <div class="flex ai:center gap:2 ml:4">
+                      <button
+                        onclick={(e) => {
+                          e.stopPropagation();
+                          staffStore.toggleFavoriteStaff(staff.id);
+                        }}
+                        class="p:2 hover:bg:care-primary-100 r:9999px"
+                        title="お気に入り解除"
+                        aria-label="favorite"
+                        data-testid="favorite-toggle-{staff.id}"
+                      >
+                        <svg class="w:5 h:5 text:care-primary-600" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                          <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+                        </svg>
+                      </button>
+                      <svg class="w:5 h:5 text:care-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+              {/each}
+            </div>
+          </div>
+        {/if}
+      </div>
+
       <div class="divide-y:1|solid|care-gray-200">
-        {#each staffStore.paginatedStaff as staff (staff.id)}
+        {#each staffStore.paginatedNonFavoriteStaff as staff (staff.id)}
           <div
             class="p:4 hover:bg:care-gray-50 cursor-pointer transition-colors {staffStore.selectedStaff?.id === staff.id ? 'bg:care-primary-50 border-l:4|solid|care-primary-500' : ''}"
             onclick={() => handleStaffClick(staff)}
@@ -444,7 +599,27 @@
                 {/if}
               </div>
               
-              <div class="flex-shrink:0 ml:4">
+              <div class="flex ai:center gap:2 ml:4">
+                <button
+                  onclick={(e) => {
+                    e.stopPropagation();
+                    staffStore.toggleFavoriteStaff(staff.id);
+                  }}
+                  class="p:2 hover:bg:care-primary-100 r:9999px"
+                  title={isFavoriteStaff(staff.id) ? 'お気に入り解除' : 'お気に入りに追加'}
+                  aria-label="favorite"
+                  data-testid="favorite-toggle-{staff.id}"
+                >
+                  {#if isFavoriteStaff(staff.id)}
+                    <svg class="w:5 h:5 text:care-primary-600" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                      <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+                    </svg>
+                  {:else}
+                    <svg class="w:5 h:5 text:care-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.617 4.98a1 1 0 00.95.69h5.234c.969 0 1.371 1.24.588 1.81l-4.236 3.078a1 1 0 00-.364 1.118l1.618 4.98c.3.922-.755 1.688-1.54 1.118l-4.236-3.078a1 1 0 00-1.176 0l-4.236 3.078c-.784.57-1.838-.196-1.539-1.118l1.618-4.98a1 1 0 00-.364-1.118L2.98 10.407c-.783-.57-.38-1.81.588-1.81h5.234a1 1 0 00.95-.69l1.617-4.98z" />
+                    </svg>
+                  {/if}
+                </button>
                 <svg class="w:5 h:5 text:care-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                 </svg>
@@ -456,13 +631,13 @@
     </div>
 
     <!-- Pagination -->
-    {#if staffStore.totalPages > 1}
+    {#if staffStore.nonFavoriteTotalPages > 1}
       <div class="flex-shrink:0 p:4 border-t:1|solid|care-gray-200 bg:care-background-primary">
         <div class="flex ai:center jc:space-betwrrn">
           <div class="text:sm text:care-text-secondary">
             {((staffStore.currentPage - 1) * staffStore.itemsPerPage) + 1} - 
-            {Math.min(staffStore.currentPage * staffStore.itemsPerPage, staffStore.sortedStaff.length)} 件 / 
-            {staffStore.sortedStaff.length} 件中
+            {Math.min(staffStore.currentPage * staffStore.itemsPerPage, staffStore.nonFavoriteStaff.length)} 件 / 
+            {staffStore.nonFavoriteStaff.length} 件中
           </div>
           
           <div class="flex ai:center gap:1">
@@ -479,37 +654,37 @@
                 </svg>
               {/snippet}
             </Button>
-            
-            {#each getPaginationPages(staffStore.currentPage, staffStore.totalPages) as page}
-              {#if page === '...'}
-                <span class="px:3 py:1 text:care-text-secondary">...</span>
-              {:else}
-                <Button
-                  variant={staffStore.currentPage === page ? 'primary' : 'outline'}
-                  size="sm"
-                  onclick={() => handlePageChange(page)}
-                  data-testid="page-{page}"
-                >
-                  {#snippet children()}
-                    {page}
-                  {/snippet}
-                </Button>
-              {/if}
-            {/each}
-            
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={staffStore.currentPage === staffStore.totalPages}
-              onclick={() => handlePageChange(staffStore.currentPage + 1)}
-              data-testid="next-page"
-            >
-              {#snippet children()}
-                <svg class="w:4 h:4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                </svg>
-              {/snippet}
-            </Button>
+
+				{#each getPaginationPages(staffStore.currentPage, staffStore.nonFavoriteTotalPages) as page}
+					{#if page === '...'}
+						<span class="px:3 py:1 text:care-text-secondary">...</span>
+					{:else}
+						<Button
+							variant={staffStore.currentPage === page ? 'primary' : 'outline'}
+							size="sm"
+							onclick={() => handlePageChange(page)}
+							data-testid="page-{page}"
+						>
+							{#snippet children()}
+								{page}
+							{/snippet}
+						</Button>
+					{/if}
+				{/each}
+
+				<Button
+					variant="outline"
+					size="sm"
+					disabled={staffStore.currentPage === staffStore.nonFavoriteTotalPages}
+					onclick={() => handlePageChange(staffStore.currentPage + 1)}
+					data-testid="next-page"
+				>
+					{#snippet children()}
+						<svg class="w:4 h:4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+						</svg>
+					{/snippet}
+				</Button>
           </div>
         </div>
       </div>

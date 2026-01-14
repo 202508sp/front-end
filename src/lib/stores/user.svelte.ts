@@ -5,12 +5,42 @@
 
 import type { User, UserFilter, UserSortOption } from '$lib/types/user';
 
+const FAVORITE_USERS_STORAGE_KEY = 'favorite-users';
+
+function loadStringArrayFromStorage(key: string, defaultValue: string[] = []): string[] {
+	if (typeof window === 'undefined') return defaultValue;
+
+	try {
+		const stored = localStorage.getItem(key);
+		if (!stored) return defaultValue;
+		const parsed = JSON.parse(stored);
+		if (!Array.isArray(parsed)) return defaultValue;
+		return parsed.filter((v): v is string => typeof v === 'string');
+	} catch (error) {
+		console.warn(`Failed to load ${key} from localStorage:`, error);
+		return defaultValue;
+	}
+}
+
+function saveStringArrayToStorage(key: string, value: string[]): void {
+	if (typeof window === 'undefined') return;
+
+	try {
+		localStorage.setItem(key, JSON.stringify(value));
+	} catch (error) {
+		console.warn(`Failed to save ${key} to localStorage:`, error);
+	}
+}
+
 export class UserStore {
 	// 基本状態
 	users = $state<User[]>([]);
 	selectedUser = $state<User | null>(null);
 	isLoading = $state(false);
 	error = $state<string | null>(null);
+
+	// お気に入り（ピン留め）
+	favoriteUserIds = $state<string[]>(loadStringArrayFromStorage(FAVORITE_USERS_STORAGE_KEY, []));
 
 	// フィルタリング・検索状態
 	filter = $state<UserFilter>({});
@@ -95,6 +125,30 @@ export class UserStore {
 			return 0;
 		});
 	});
+
+	// 派生状態 - お気に入り利用者（現在の検索/フィルタ/ソート結果に対して適用）
+	favoriteUsers = $derived.by(() => {
+		if (this.favoriteUserIds.length === 0) return [];
+		const byId = new Map(this.sortedUsers.map((u) => [u.id, u] as const));
+		return this.favoriteUserIds.map((id) => byId.get(id)).filter((u): u is User => !!u);
+	});
+
+	// 派生状態 - お気に入り以外の利用者
+	nonFavoriteUsers = $derived.by(() => {
+		if (this.favoriteUserIds.length === 0) return this.sortedUsers;
+		const favoriteSet = new Set(this.favoriteUserIds);
+		return this.sortedUsers.filter((u) => !favoriteSet.has(u.id));
+	});
+
+	// 派生状態 - お気に入り以外をページネーション
+	paginatedNonFavoriteUsers = $derived.by(() => {
+		const startIndex = (this.currentPage - 1) * this.itemsPerPage;
+		const endIndex = startIndex + this.itemsPerPage;
+		return this.nonFavoriteUsers.slice(startIndex, endIndex);
+	});
+
+	// 派生状態 - お気に入り以外の総ページ数
+	nonFavoriteTotalPages = $derived(Math.max(1, Math.ceil(this.nonFavoriteUsers.length / this.itemsPerPage)));
 
 	// 派生状態 - ページネーションされた利用者リスト
 	paginatedUsers = $derived.by(() => {
@@ -1295,11 +1349,65 @@ export class UserStore {
 			];
 
 			this.users = mockUsers;
+			this.cleanupFavorites();
 		} catch (err) {
 			this.error = err instanceof Error ? err.message : '利用者データの読み込みに失敗しました';
 		} finally {
 			this.isLoading = false;
 		}
+	}
+
+	private cleanupFavorites(): void {
+		if (this.favoriteUserIds.length === 0) return;
+		const existing = new Set(this.users.map((u) => u.id));
+		const cleaned = this.favoriteUserIds.filter((id) => existing.has(id));
+		if (cleaned.length !== this.favoriteUserIds.length) {
+			this.favoriteUserIds = cleaned;
+			saveStringArrayToStorage(FAVORITE_USERS_STORAGE_KEY, cleaned);
+			this.ensurePageInRange();
+		}
+	}
+
+	private ensurePageInRange(): void {
+		const maxPage = this.nonFavoriteTotalPages;
+		if (this.currentPage > maxPage) this.currentPage = maxPage;
+		if (this.currentPage < 1) this.currentPage = 1;
+	}
+
+	/**
+	 * お気に入り（ピン留め）を切り替え
+	 */
+	toggleFavoriteUser(userId: string): void {
+		const index = this.favoriteUserIds.indexOf(userId);
+		if (index === -1) {
+			this.favoriteUserIds = [userId, ...this.favoriteUserIds];
+		} else {
+			this.favoriteUserIds = this.favoriteUserIds.filter((id) => id !== userId);
+		}
+
+		saveStringArrayToStorage(FAVORITE_USERS_STORAGE_KEY, this.favoriteUserIds);
+		this.ensurePageInRange();
+	}
+
+	/**
+	 * お気に入り内の順序を移動
+	 */
+	moveFavoriteUser(draggedUserId: string, targetUserId: string, insertAfter: boolean): void {
+		if (draggedUserId === targetUserId) return;
+
+		const ids = this.favoriteUserIds.slice();
+		const fromIndex = ids.indexOf(draggedUserId);
+		const targetIndex = ids.indexOf(targetUserId);
+		if (fromIndex === -1 || targetIndex === -1) return;
+
+		ids.splice(fromIndex, 1);
+		let insertIndex = targetIndex;
+		if (fromIndex < targetIndex) insertIndex -= 1;
+		if (insertAfter) insertIndex += 1;
+		ids.splice(insertIndex, 0, draggedUserId);
+
+		this.favoriteUserIds = ids;
+		saveStringArrayToStorage(FAVORITE_USERS_STORAGE_KEY, ids);
 	}
 
 	/**
@@ -1433,7 +1541,7 @@ export class UserStore {
 	 * ページを変更
 	 */
 	setPage(page: number): void {
-		if (page >= 1 && page <= this.totalPages) {
+		if (page >= 1 && page <= this.nonFavoriteTotalPages) {
 			this.currentPage = page;
 		}
 	}
@@ -1444,6 +1552,7 @@ export class UserStore {
 	setItemsPerPage(itemsPerPage: number): void {
 		this.itemsPerPage = itemsPerPage;
 		this.currentPage = 1; // ページサイズ変更時はページをリセット
+		this.ensurePageInRange();
 	}
 
 	/**

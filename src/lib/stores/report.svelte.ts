@@ -4,12 +4,42 @@
 
 import type { Report, ReportTemplate, ReportFilter, ReportSortOption, ReportType, ReportStatus } from '$lib/types/report';
 
-class ReportStore {
+const FAVORITE_REPORTS_STORAGE_KEY = 'favorite-reports';
+
+function loadStringArrayFromStorage(key: string, defaultValue: string[] = []): string[] {
+  if (typeof window === 'undefined') return defaultValue;
+
+  try {
+    const stored = localStorage.getItem(key);
+    if (!stored) return defaultValue;
+    const parsed = JSON.parse(stored);
+    if (!Array.isArray(parsed)) return defaultValue;
+    return parsed.filter((v): v is string => typeof v === 'string');
+  } catch (error) {
+    console.warn(`Failed to load ${key} from localStorage:`, error);
+    return defaultValue;
+  }
+}
+
+function saveStringArrayToStorage(key: string, value: string[]): void {
+  if (typeof window === 'undefined') return;
+
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+  } catch (error) {
+    console.warn(`Failed to save ${key} to localStorage:`, error);
+  }
+}
+
+export class ReportStore {
   // 基本状態
   reports = $state<Report[]>([]);
   templates = $state<ReportTemplate[]>([]);
   selectedReport = $state<Report | null>(null);
   selectedTemplate = $state<ReportTemplate | null>(null);
+
+  // お気に入り（ピン留め）
+  favoriteReportIds = $state<string[]>(loadStringArrayFromStorage(FAVORITE_REPORTS_STORAGE_KEY, []));
   
   // UI状態
   isLoading = $state(false);
@@ -19,7 +49,7 @@ class ReportStore {
   
   // 派生状態
   filteredReports = $derived(() => {
-    let filtered = this.reports;
+    let filtered = this.reports.slice();
     
     // 検索フィルタ
     if (this.filter.searchTerm) {
@@ -48,9 +78,10 @@ class ReportStore {
     
     // 日付範囲フィルタ
     if (this.filter.dateRange) {
-      filtered = filtered.filter(report => {
-        const reportDate = new Date(report.date);
-        return reportDate >= this.filter.dateRange!.start && reportDate <= this.filter.dateRange!.end;
+      const { start, end } = this.filter.dateRange;
+      filtered = filtered.filter((report) => {
+        const reportDate = report.date instanceof Date ? report.date : new Date(report.date);
+        return reportDate >= start && reportDate <= end;
       });
     }
     
@@ -80,9 +111,21 @@ class ReportStore {
       return 0;
     });
   });
+
+  favoriteReports = $derived.by(() => {
+    if (this.favoriteReportIds.length === 0) return [];
+    const byId = new Map(this.filteredReports.map((r) => [r.id, r] as const));
+    return this.favoriteReportIds.map((id) => byId.get(id)).filter((r): r is Report => !!r);
+  });
+
+  nonFavoriteReports = $derived.by(() => {
+    if (this.favoriteReportIds.length === 0) return this.filteredReports;
+    const favoriteSet = new Set(this.favoriteReportIds);
+    return this.filteredReports.filter((r) => !favoriteSet.has(r.id));
+  });
   
   // デフォルトテンプレート
-  defaultTemplates = $derived(() => 
+  defaultTemplates = $derived.by(() => 
     this.templates.filter(template => template.isDefault)
   );
   
@@ -114,11 +157,52 @@ class ReportStore {
           updatedAt: new Date('2024-01-15T18:00:00')
         }
       ];
+
+      this.cleanupFavorites();
     } catch (error) {
       this.error = error instanceof Error ? error.message : 'レポートの読み込みに失敗しました';
     } finally {
       this.isLoading = false;
     }
+  }
+
+  private cleanupFavorites(): void {
+    if (this.favoriteReportIds.length === 0) return;
+    const existing = new Set(this.reports.map((r) => r.id));
+    const cleaned = this.favoriteReportIds.filter((id) => existing.has(id));
+    if (cleaned.length !== this.favoriteReportIds.length) {
+      this.favoriteReportIds = cleaned;
+      saveStringArrayToStorage(FAVORITE_REPORTS_STORAGE_KEY, cleaned);
+    }
+  }
+
+  toggleFavoriteReport(reportId: string): void {
+    const index = this.favoriteReportIds.indexOf(reportId);
+    if (index === -1) {
+      this.favoriteReportIds = [reportId, ...this.favoriteReportIds];
+    } else {
+      this.favoriteReportIds = this.favoriteReportIds.filter((id) => id !== reportId);
+    }
+
+    saveStringArrayToStorage(FAVORITE_REPORTS_STORAGE_KEY, this.favoriteReportIds);
+  }
+
+  moveFavoriteReport(draggedReportId: string, targetReportId: string, insertAfter: boolean): void {
+    if (draggedReportId === targetReportId) return;
+
+    const ids = this.favoriteReportIds.slice();
+    const fromIndex = ids.indexOf(draggedReportId);
+    const targetIndex = ids.indexOf(targetReportId);
+    if (fromIndex === -1 || targetIndex === -1) return;
+
+    ids.splice(fromIndex, 1);
+    let insertIndex = targetIndex;
+    if (fromIndex < targetIndex) insertIndex -= 1;
+    if (insertAfter) insertIndex += 1;
+    ids.splice(insertIndex, 0, draggedReportId);
+
+    this.favoriteReportIds = ids;
+    saveStringArrayToStorage(FAVORITE_REPORTS_STORAGE_KEY, ids);
   }
   
   async loadTemplates() {

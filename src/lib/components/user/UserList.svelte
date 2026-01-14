@@ -6,6 +6,8 @@
 	import FormField from '$lib/components/ui/FormField.svelte';
 	import { onMount, untrack } from 'svelte';
 	import { fly } from 'svelte/transition';
+	import { makeUniversalDraggable, makeUniversalDropZone } from '$lib/utils/dragdrop.js';
+	import type { DragData, DropZone } from '$lib/utils/dragdrop.js';
 
 	interface Props {
 		onUserSelect?: (user: User) => void;
@@ -112,6 +114,73 @@
 	function handleUserClick(user: User) {
 		userStore.selectUser(user);
 		onUserSelect?.(user);
+	}
+
+	function isFavoriteUser(userId: string): boolean {
+		return userStore.favoriteUserIds.includes(userId);
+	}
+
+	function favoriteUserDraggable(element: HTMLElement, params: { userId: string }) {
+		let cleanup: (() => void) | null = null;
+
+		function setup(p: { userId: string }) {
+			cleanup?.();
+
+			const dragData: DragData = {
+				id: p.userId,
+				type: 'favorite-user',
+				data: { userId: p.userId }
+			};
+
+			cleanup = makeUniversalDraggable(element, dragData, {
+				dragOptions: {
+					ghostOpacity: 0.5
+				},
+				touchOptions: {
+					threshold: 10,
+					ghostElement: true
+				}
+			});
+		}
+
+		setup(params);
+
+		return {
+			update: setup,
+			destroy: () => cleanup?.()
+		};
+	}
+
+	function favoriteUserDropZone(element: HTMLElement, params: { targetUserId: string }) {
+		let cleanup: (() => void) | null = null;
+
+		function setup(p: { targetUserId: string }) {
+			cleanup?.();
+
+			const zone: DropZone = {
+				id: `favorite-user-${p.targetUserId}`,
+				element,
+				accepts: ['favorite-user'],
+				onDrop: (data, position) => {
+					const insertAfter = position.y > element.getBoundingClientRect().height / 2;
+					userStore.moveFavoriteUser(data.id, p.targetUserId, insertAfter);
+				}
+			};
+
+			cleanup = makeUniversalDropZone(element, zone, {
+				dragOverClass: 'drag-over',
+				dragActiveClass: 'drag-active',
+				dropValidClass: 'drop-valid',
+				dropInvalidClass: 'drop-invalid'
+			});
+		}
+
+		setup(params);
+
+		return {
+			update: setup,
+			destroy: () => cleanup?.()
+		};
 	}
 
 	// Handle sort change
@@ -460,7 +529,7 @@
 				</button>
 			</div>
 		</div>
-	{:else if userStore.paginatedUsers.length === 0}
+	{:else if userStore.favoriteUsers.length === 0 && userStore.paginatedNonFavoriteUsers.length === 0}
 		<!-- Empty state -->
 		<div class="p:16px ai:center jc:center flex flex-1">
 			<div class="text:center bg:imemo-beige-100 p:32px r:8px max-w:400px">
@@ -489,9 +558,85 @@
 		<!-- User list -->
 		<div class="p:16px overflow:auto flex-1">
 			<div class="gap:12px flex:column flex">
-				{#each userStore.paginatedUsers as user, i (user.id)}
+				{#if userStore.favoriteUsers.length > 0}
+					<div class="bg:imemo-beige-50 border:1|solid|imemo-brown-200 r:8px p:12px">
+						<div class="mb:8px ai:center jc:space-between flex">
+							<div class="gap:6px ai:center flex">
+								<svg class="w:16px h:16px text:imemo-brown-500" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+									<path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+								</svg>
+								<h3 class="font:14px text:imemo-brown-700">お気に入り</h3>
+								<span class="font:12px text:imemo-brown-500">({userStore.favoriteUsers.length})</span>
+							</div>
+							<span class="font:12px text:imemo-brown-500">ドラッグで並び替え</span>
+						</div>
+						<div class="gap:8px flex:column flex">
+							{#each userStore.favoriteUsers as user (user.id)}
+								<div
+									use:favoriteUserDropZone={{ targetUserId: user.id }}
+									class="px:16px w:100% bg:imemo-beige-100 cursor-pointer transition-all border:1|solid|imemo-brown-200"
+									onclick={() => handleUserClick(user)}
+									data-testid="user-favorite-item-{user.id}"
+									role="button"
+									tabindex="0"
+									onkeydown={(e) => {
+										if (e.key === 'Enter' || e.key === ' ') {
+											e.preventDefault();
+											handleUserClick(user);
+										}
+									}}
+								>
+									<div class="w:100%">
+										<div class="flex:row ai:center jc:space-between gap:24px flex">
+											<div class="ai:center gap:10px flex">
+												<span
+													use:favoriteUserDraggable={{ userId: user.id }}
+													class="w:24px h:24px ai:center jc:center flex cursor:grab"
+													aria-label="drag"
+													title="ドラッグで並び替え"
+												>
+													<svg class="w:16px h:16px text:imemo-brown-500" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+														<path d="M10 4H8v2h2V4zm6 0h-2v2h2V4zM10 9H8v2h2V9zm6 0h-2v2h2V9zM10 14H8v2h2v-2zm6 0h-2v2h2v-2zM10 19H8v2h2v-2zm6 0h-2v2h2v-2z" />
+													</svg>
+												</span>
+												<div class="gap:8px mb:4px flex:row ai:center flex">
+													<h3 class="font:18px text:imemo-brown-700">{user.name}</h3>
+													<span class="font:14px text:imemo-brown-500">/ {user.nameKana}</span>
+												</div>
+											</div>
+											<div class="flex:row ai:center gap:24px flex">
+												<span class="px:8px py:4px bg:imemo-brown-400 text:white font:12px r:4px">要介護 {user.careLevel}</span>
+												<span class="font:14px text:imemo-brown-600">{calculateAge(user.birthDate)} 歳</span>
+												{#if !user.isActive}
+													<span class="px:8px py:4px bg:imemo-brown-200 text:imemo-brown-600 font:12px r:4px">非アクティブ</span>
+												{/if}
+												<span class="font:14px line-h:.2em text:imemo-brown-700">{user.gender === 'male' ? '男性' : user.gender === 'female' ? '女性' : 'その他'}</span>
+												<button
+													class="w:32px h:32px r:8px bg:transparent border:none cursor-pointer ai:center jc:center flex"
+													aria-label="favorite"
+													title="お気に入り解除"
+													data-testid="favorite-toggle-{user.id}"
+													onclick={(e) => {
+														e.stopPropagation();
+														userStore.toggleFavoriteUser(user.id);
+													}}
+												>
+													<svg class="w:18px h:18px text:imemo-brown-500" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+														<path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+													</svg>
+												</button>
+											</div>
+										</div>
+									</div>
+								</div>
+							{/each}
+						</div>
+					</div>
+				{/if}
+
+				{#each userStore.paginatedNonFavoriteUsers as user, i (user.id)}
 					<div
-						class="px:16px w:100% {i !== userStore.paginatedUsers.length - 1
+						class="px:16px w:100% {i !== userStore.paginatedNonFavoriteUsers.length - 1
 							? 'bb:2px|solid|var(--color-tertiary) pb:12px '
 							: 'pb:0px'} bg:imemo-beige-100 cursor-pointer transition-all {userStore.selectedUser
 							?.id === user.id
@@ -537,6 +682,26 @@
 									<span class="font:14px line-h:.2em text:imemo-brown-700">
 										{user.gender === 'male' ? '男性' : user.gender === 'female' ? '女性' : 'その他'}
 									</span>
+									<button
+										class="w:32px h:32px r:8px bg:transparent border:none cursor-pointer ai:center jc:center flex"
+										aria-label="favorite"
+										title={isFavoriteUser(user.id) ? 'お気に入り解除' : 'お気に入りに追加'}
+										data-testid="favorite-toggle-{user.id}"
+										onclick={(e) => {
+											e.stopPropagation();
+											userStore.toggleFavoriteUser(user.id);
+										}}
+									>
+										{#if isFavoriteUser(user.id)}
+											<svg class="w:18px h:18px text:imemo-brown-500" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+												<path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+											</svg>
+										{:else}
+											<svg class="w:18px h:18px text:imemo-brown-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+												<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.617 4.98a1 1 0 00.95.69h5.234c.969 0 1.371 1.24.588 1.81l-4.236 3.078a1 1 0 00-.364 1.118l1.618 4.98c.3.922-.755 1.688-1.54 1.118l-4.236-3.078a1 1 0 00-1.176 0l-4.236 3.078c-.784.57-1.838-.196-1.539-1.118l1.618-4.98a1 1 0 00-.364-1.118L2.98 10.407c-.783-.57-.38-1.81.588-1.81h5.234a1 1 0 00.95-.69l1.617-4.98z" />
+											</svg>
+										{/if}
+									</button>
 								</div>
 							</div>
 						</div>
@@ -546,14 +711,14 @@
 		</div>
 
 		<!-- Pagination -->
-		{#if userStore.totalPages > 1}
+		{#if userStore.nonFavoriteTotalPages > 1}
 			<div class="flex-shrink:0 p:16px bg:imemo-beige-50 border-t:1|solid|imemo-brown-200">
 				<div class="ai:center jc:space-betwrrn flex">
 					<div class="font:14px text:imemo-brown-600">
 						{(userStore.currentPage - 1) * userStore.itemsPerPage + 1} -
-						{Math.min(userStore.currentPage * userStore.itemsPerPage, userStore.sortedUsers.length)}
+						{Math.min(userStore.currentPage * userStore.itemsPerPage, userStore.nonFavoriteUsers.length)}
 						件 /
-						{userStore.sortedUsers.length} 件中
+						{userStore.nonFavoriteUsers.length} 件中
 					</div>
 
 					<div class="gap:6px ai:center flex">
@@ -579,7 +744,7 @@
 							</svg>
 						</button>
 
-						{#each getPaginationPages(userStore.currentPage, userStore.totalPages) as page}
+						{#each getPaginationPages(userStore.currentPage, userStore.nonFavoriteTotalPages) as page}
 							{#if page === '...'}
 								<span class="px:12px py:6px font:14px text:imemo-brown-400">...</span>
 							{:else}
@@ -598,7 +763,7 @@
 
 						<button
 							aria-label="down"
-							disabled={userStore.currentPage === userStore.totalPages}
+							disabled={userStore.currentPage === userStore.nonFavoriteTotalPages}
 							onclick={() => handlePageChange(userStore.currentPage + 1)}
 							class="w:32px h:32px bg:white border:1|solid|imemo-brown-200 r:8px hover:bg:imemo-beige-50 disabled:opacity:50 disabled:cursor:not-allowed ai:center jc:center flex transition-colors"
 							data-testid="next-page"

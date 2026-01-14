@@ -2,9 +2,21 @@
  * UserStore のテスト
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { UserStore } from './user.svelte';
 import type { User } from '$lib/types/user';
+
+// localStorage のモック（お気に入り永続化の影響を排除）
+const localStorageMock = {
+  getItem: vi.fn(),
+  setItem: vi.fn(),
+  removeItem: vi.fn(),
+  clear: vi.fn()
+};
+
+Object.defineProperty(window, 'localStorage', {
+  value: localStorageMock
+});
 
 describe('UserStore', () => {
   let userStore: UserStore;
@@ -43,6 +55,8 @@ describe('UserStore', () => {
   };
   
   beforeEach(() => {
+		vi.clearAllMocks();
+		localStorageMock.getItem.mockReturnValue(null);
     userStore = new UserStore();
   });
   
@@ -55,6 +69,7 @@ describe('UserStore', () => {
       expect(userStore.searchTerm).toBe('');
       expect(userStore.currentPage).toBe(1);
       expect(userStore.itemsPerPage).toBe(20);
+      expect(userStore.favoriteUserIds).toEqual([]);
     });
   });
   

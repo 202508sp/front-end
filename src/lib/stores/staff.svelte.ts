@@ -5,12 +5,42 @@
 
 import type { Staff, StaffFilter, StaffSortOption, StaffRole, WorkSchedule } from '$lib/types/staff';
 
+const FAVORITE_STAFF_STORAGE_KEY = 'favorite-staff';
+
+function loadStringArrayFromStorage(key: string, defaultValue: string[] = []): string[] {
+    if (typeof window === 'undefined') return defaultValue;
+
+    try {
+        const stored = localStorage.getItem(key);
+        if (!stored) return defaultValue;
+        const parsed = JSON.parse(stored);
+        if (!Array.isArray(parsed)) return defaultValue;
+        return parsed.filter((v): v is string => typeof v === 'string');
+    } catch (error) {
+        console.warn(`Failed to load ${key} from localStorage:`, error);
+        return defaultValue;
+    }
+}
+
+function saveStringArrayToStorage(key: string, value: string[]): void {
+    if (typeof window === 'undefined') return;
+
+    try {
+        localStorage.setItem(key, JSON.stringify(value));
+    } catch (error) {
+        console.warn(`Failed to save ${key} to localStorage:`, error);
+    }
+}
+
 export class StaffStore {
     // 基本状態
     staff = $state<Staff[]>([]);
     selectedStaff = $state<Staff | null>(null);
     isLoading = $state(false);
     error = $state<string | null>(null);
+
+    // お気に入り（ピン留め）
+    favoriteStaffIds = $state<string[]>(loadStringArrayFromStorage(FAVORITE_STAFF_STORAGE_KEY, []));
 
     // フィルタリング・検索状態
     filter = $state<StaffFilter>({});
@@ -85,6 +115,30 @@ export class StaffStore {
             return 0;
         });
     });
+
+    // 派生状態 - お気に入り職員（現在の検索/フィルタ/ソート結果に対して適用）
+    favoriteStaff = $derived.by(() => {
+        if (this.favoriteStaffIds.length === 0) return [];
+        const byId = new Map(this.sortedStaff.map((s) => [s.id, s] as const));
+        return this.favoriteStaffIds.map((id) => byId.get(id)).filter((s): s is Staff => !!s);
+    });
+
+    // 派生状態 - お気に入り以外の職員
+    nonFavoriteStaff = $derived.by(() => {
+        if (this.favoriteStaffIds.length === 0) return this.sortedStaff;
+        const favoriteSet = new Set(this.favoriteStaffIds);
+        return this.sortedStaff.filter((s) => !favoriteSet.has(s.id));
+    });
+
+    // 派生状態 - お気に入り以外をページネーション
+    paginatedNonFavoriteStaff = $derived.by(() => {
+        const startIndex = (this.currentPage - 1) * this.itemsPerPage;
+        const endIndex = startIndex + this.itemsPerPage;
+        return this.nonFavoriteStaff.slice(startIndex, endIndex);
+    });
+
+    // 派生状態 - お気に入り以外の総ページ数
+    nonFavoriteTotalPages = $derived(Math.max(1, Math.ceil(this.nonFavoriteStaff.length / this.itemsPerPage)));
 
     // 派生状態 - ページネーションされた職員リスト
     paginatedStaff = $derived.by(() => {
@@ -245,11 +299,65 @@ export class StaffStore {
             ];
 
             this.staff = mockStaff;
+            this.cleanupFavorites();
         } catch (err) {
             this.error = err instanceof Error ? err.message : '職員データの読み込みに失敗しました';
         } finally {
             this.isLoading = false;
         }
+    }
+
+    private cleanupFavorites(): void {
+        if (this.favoriteStaffIds.length === 0) return;
+        const existing = new Set(this.staff.map((s) => s.id));
+        const cleaned = this.favoriteStaffIds.filter((id) => existing.has(id));
+        if (cleaned.length !== this.favoriteStaffIds.length) {
+            this.favoriteStaffIds = cleaned;
+            saveStringArrayToStorage(FAVORITE_STAFF_STORAGE_KEY, cleaned);
+            this.ensurePageInRange();
+        }
+    }
+
+    private ensurePageInRange(): void {
+        const maxPage = this.nonFavoriteTotalPages;
+        if (this.currentPage > maxPage) this.currentPage = maxPage;
+        if (this.currentPage < 1) this.currentPage = 1;
+    }
+
+    /**
+     * お気に入り（ピン留め）を切り替え
+     */
+    toggleFavoriteStaff(staffId: string): void {
+        const index = this.favoriteStaffIds.indexOf(staffId);
+        if (index === -1) {
+            this.favoriteStaffIds = [staffId, ...this.favoriteStaffIds];
+        } else {
+            this.favoriteStaffIds = this.favoriteStaffIds.filter((id) => id !== staffId);
+        }
+
+        saveStringArrayToStorage(FAVORITE_STAFF_STORAGE_KEY, this.favoriteStaffIds);
+        this.ensurePageInRange();
+    }
+
+    /**
+     * お気に入り内の順序を移動
+     */
+    moveFavoriteStaff(draggedStaffId: string, targetStaffId: string, insertAfter: boolean): void {
+        if (draggedStaffId === targetStaffId) return;
+
+        const ids = this.favoriteStaffIds.slice();
+        const fromIndex = ids.indexOf(draggedStaffId);
+        const targetIndex = ids.indexOf(targetStaffId);
+        if (fromIndex === -1 || targetIndex === -1) return;
+
+        ids.splice(fromIndex, 1);
+        let insertIndex = targetIndex;
+        if (fromIndex < targetIndex) insertIndex -= 1;
+        if (insertAfter) insertIndex += 1;
+        ids.splice(insertIndex, 0, draggedStaffId);
+
+        this.favoriteStaffIds = ids;
+        saveStringArrayToStorage(FAVORITE_STAFF_STORAGE_KEY, ids);
     }
 
     /**
@@ -458,7 +566,7 @@ export class StaffStore {
      * ページを変更
      */
     setPage(page: number): void {
-        if (page >= 1 && page <= this.totalPages) {
+        if (page >= 1 && page <= this.nonFavoriteTotalPages) {
             this.currentPage = page;
         }
     }
@@ -469,6 +577,7 @@ export class StaffStore {
     setItemsPerPage(itemsPerPage: number): void {
         this.itemsPerPage = itemsPerPage;
         this.currentPage = 1; // ページサイズ変更時はページをリセット
+        this.ensurePageInRange();
     }
 
     /**

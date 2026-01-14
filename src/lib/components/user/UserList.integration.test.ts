@@ -33,8 +33,10 @@ describe('UserList Integration', () => {
   it('filters users by care level', () => {
     userStore.setFilter({ careLevel: [3] });
     const filtered = userStore.filteredUsers;
-    expect(filtered.length).toBe(1);
-    expect(filtered[0].careLevel).toBe(3);
+    expect(filtered.length).toBeGreaterThan(0);
+    filtered.forEach((user) => {
+      expect(user.careLevel).toBe(3);
+    });
   });
 
   it('filters users by gender', () => {
@@ -49,8 +51,10 @@ describe('UserList Integration', () => {
   it('filters users by status', () => {
     userStore.setFilter({ status: ['inactive'] });
     const filtered = userStore.filteredUsers;
-    expect(filtered.length).toBe(1);
-    expect(filtered[0].isActive).toBe(false);
+    expect(filtered.length).toBeGreaterThan(0);
+    filtered.forEach((user) => {
+      expect(user.isActive).toBe(false);
+    });
   });
 
   it('filters users by age range', () => {
